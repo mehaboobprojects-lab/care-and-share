@@ -35,7 +35,17 @@ export default function DashboardPage() {
                 );
 
                 if (response.documents.length > 0) {
-                    setVolunteer(response.documents[0] as unknown as Volunteer);
+                    const volunteerData = response.documents[0] as unknown as Volunteer;
+                    setVolunteer(volunteerData);
+
+                    // Redirect based on role
+                    if (volunteerData.role === 'super_admin') {
+                        router.push('/super-admin');
+                    } else if (volunteerData.role === 'admin') {
+                        router.push('/admin');
+                    } else if (volunteerData.role === 'parent') {
+                        router.push('/parent');
+                    }
                 } else {
                     // Handle edge case where auth exists but profile doesn't?
                     console.error("No volunteer profile found")
