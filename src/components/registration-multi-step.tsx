@@ -114,8 +114,14 @@ export function RegistrationMultiStep() {
                 `${data.firstName} ${data.lastName}`
             )
 
-            // Create Session
-            await account.createEmailPasswordSession(data.contactEmail, data.password)
+            // Create Session (only if not already logged in)
+            try {
+                await account.get()
+                // Already has a session, maybe redirecting elsewhere?
+            } catch (e) {
+                // No session, create one
+                await account.createEmailPasswordSession(data.contactEmail, data.password)
+            }
 
             // Create Volunteer Document
             await databases.createDocument(

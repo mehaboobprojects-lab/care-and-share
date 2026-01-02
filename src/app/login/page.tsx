@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -39,11 +39,32 @@ export default function LoginPage() {
         resolver: zodResolver(loginSchema),
     })
 
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                await account.get()
+                router.push("/dashboard")
+            } catch (err) {
+                // Not logged in, stay on login page
+            }
+        }
+        checkAuth()
+    }, [router])
+
     async function onSubmit(data: LoginFormValues) {
         setIsLoading(true)
         setError(null)
 
         try {
+            // Check if user is already logged in to avoid "active session" error
+            try {
+                await account.get()
+                router.push("/dashboard")
+                return
+            } catch (e) {
+                // No session, proceed with login
+            }
+
             await account.createEmailPasswordSession(data.email, data.password)
             router.push("/dashboard")
         } catch (err: any) {
