@@ -74,7 +74,7 @@ export function CheckInManager({ volunteerId, existingCheckIn, onStatusChange }:
     if (activeCheckIn) {
         return (
             <div className="flex flex-col gap-4 items-center">
-                <div className="text-xl font-semibold border-b pb-2 mb-2 animate-pulse text-green-600">
+                <div className="text-xl font-semibold border-b border-border pb-2 mb-2 animate-pulse text-primary dark:text-primary-foreground">
                     Currently Checked In ({new Date(activeCheckIn.startTime).toLocaleTimeString()})
                 </div>
                 <Button
@@ -86,7 +86,7 @@ export function CheckInManager({ volunteerId, existingCheckIn, onStatusChange }:
                 >
                     {isLoading ? "Processing..." : "CHECK OUT"}
                 </Button>
-                <p className="text-sm text-gray-500">Don't forget to check out to log your hours!</p>
+                <p className="text-sm text-muted-foreground">Don't forget to check out to log your hours!</p>
             </div>
         )
     }
@@ -97,7 +97,7 @@ export function CheckInManager({ volunteerId, existingCheckIn, onStatusChange }:
                 size="lg"
                 onClick={() => handleCheckIn('sandwich_making')}
                 disabled={isLoading}
-                className="w-full h-20 text-xl bg-green-600 hover:bg-green-700"
+                className="w-full h-20 text-xl"
             >
                 Start Sandwich Making
             </Button>
@@ -106,7 +106,7 @@ export function CheckInManager({ volunteerId, existingCheckIn, onStatusChange }:
                 variant="secondary"
                 onClick={() => handleCheckIn('distribution')}
                 disabled={isLoading}
-                className="w-full h-16 text-lg bg-blue-100 hover:bg-blue-200 text-blue-800"
+                className="w-full h-16 text-lg"
             >
                 Start Distribution
             </Button>

@@ -234,7 +234,7 @@ export default function ParentDashboard() {
     }
 
     return (
-        <div className="flex min-h-screen flex-col bg-gray-50 p-4 sm:p-8">
+        <div className="flex min-h-screen flex-col bg-background p-4 sm:p-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <h1 className="text-3xl font-bold">Parent Dashboard</h1>
                 <Button onClick={() => router.push('/dashboard')} variant="outline">My Dashboard</Button>
@@ -365,25 +365,25 @@ export default function ParentDashboard() {
                             {dependents.map((dependent) => (
                                 <div
                                     key={dependent.$id}
-                                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-lg shadow-sm gap-4"
+                                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card border border-border p-4 rounded-lg shadow-sm gap-4"
                                 >
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <p className="font-semibold text-lg">{dependent.firstName} {dependent.lastName}</p>
                                             {!dependent.isApproved && (
-                                                <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 font-medium">
+                                                <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 font-semibold">
                                                     PENDING APPROVAL
                                                 </span>
                                             )}
                                             {dependent.isApproved && (
-                                                <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 font-medium">
+                                                <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 font-semibold">
                                                     APPROVED
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-sm text-gray-600">{dependent.phone}</p>
+                                        <p className="text-sm text-muted-foreground">{dependent.phone}</p>
                                         {dependent.grade && (
-                                            <p className="text-xs text-gray-500 mt-1">
+                                            <p className="text-xs text-muted-foreground/80 mt-1">
                                                 Grade {dependent.grade} • {dependent.schoolName}
                                             </p>
                                         )}

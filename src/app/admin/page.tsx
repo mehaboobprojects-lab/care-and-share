@@ -92,8 +92,8 @@ export default function AdminDashboard() {
     if (isLoading) return null
 
     return (
-        <div className="flex min-h-screen flex-col bg-gray-50 p-8">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 sm:gap-0">
+        <div className="flex min-h-screen flex-col bg-background p-4 sm:p-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <h1 className="text-3xl font-bold">Admin Dashboard</h1>
                 <Button onClick={() => router.push('/admin/reports')} variant="outline">View Reports</Button>
             </div>
@@ -110,11 +110,15 @@ export default function AdminDashboard() {
                         ) : (
                             <ul className="space-y-4">
                                 {activeCheckins.map((checkin) => (
-                                    <li key={checkin.$id} className="flex justify-between items-center border-b pb-2">
-                                        <div>
+                                    <li key={checkin.$id} className="flex justify-between items-center border-b border-border pb-4">
+                                        <div className="space-y-1">
                                             <p className="font-medium">Volunteer ID: {checkin.volunteerId}</p>
-                                            <p className="text-sm text-gray-500">Since: {new Date(checkin.startTime).toLocaleTimeString()}</p>
-                                            <p className="text-xs badge bg-blue-100 text-blue-800 px-2 py-1 rounded">{checkin.type}</p>
+                                            <p className="text-sm text-muted-foreground">Since: {new Date(checkin.startTime).toLocaleTimeString()}</p>
+                                            <div className="inline-block">
+                                                <span className="text-xs font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20">
+                                                    {checkin.type}
+                                                </span>
+                                            </div>
                                         </div>
                                     </li>
                                 ))}
@@ -134,18 +138,18 @@ export default function AdminDashboard() {
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm text-left">
-                                    <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                                    <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b border-border">
                                         <tr>
-                                            <th className="px-4 py-2">Date</th>
-                                            <th className="px-4 py-2">Volunteer ID</th>
-                                            <th className="px-4 py-2">Activity</th>
-                                            <th className="px-4 py-2">Hours</th>
-                                            <th className="px-4 py-2">Actions</th>
+                                            <th className="px-4 py-3">Date</th>
+                                            <th className="px-4 py-3">Volunteer ID</th>
+                                            <th className="px-4 py-3">Activity</th>
+                                            <th className="px-4 py-3">Hours</th>
+                                            <th className="px-4 py-3">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {pendingReviews.map((checkin) => (
-                                            <tr key={checkin.$id} className="bg-white border-b hover:bg-gray-50">
+                                            <tr key={checkin.$id} className="bg-card border-b border-border hover:bg-muted/30 transition-colors">
                                                 <td className="px-4 py-2">{new Date(checkin.startTime).toLocaleDateString()}</td>
                                                 <td className="px-4 py-2">{checkin.volunteerId}</td>
                                                 <td className="px-4 py-2 badge text-xs">{checkin.type}</td>
@@ -173,27 +177,28 @@ export default function AdminDashboard() {
                             <p className="text-muted-foreground">No pending registrations.</p>
                         ) : (
                             <ul className="space-y-4">
-                                {pendingVolunteers.map((vol) => (
-                                    <li key={vol.$id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded shadow-sm gap-4">
-                                        <div>
-                                            <p className="font-medium">{vol.firstName} {vol.lastName}</p>
-                                            <p className="text-sm text-gray-500">{vol.email}</p>
-                                            <div className="flex gap-2 text-xs text-gray-400">
-                                                <span>{vol.relationshipType}</span>
-                                                <span className="capitalize text-blue-500">{vol.role}</span>
+                                {pendingVolunteers.map((volunteer) => (
+                                    <li key={volunteer.$id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card border border-border p-4 rounded-lg shadow-sm gap-4">
+                                        <div className="space-y-1">
+                                            <p className="font-semibold">{volunteer.firstName} {volunteer.lastName}</p>
+                                            <p className="text-sm text-muted-foreground">{volunteer.email}</p>
+                                            <div className="flex gap-2 text-xs text-muted-foreground/70">
+                                                <span>{volunteer.relationshipType}</span>
+                                                <span className="capitalize text-primary font-medium">{volunteer.role}</span>
                                             </div>
                                         </div>
                                         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                                            <Button onClick={() => approveVolunteer(vol.$id)} size="sm" className="bg-green-600 hover:bg-green-700">
+                                            <Button onClick={() => approveVolunteer(volunteer.$id)} size="sm" className="bg-green-600 hover:bg-green-700">
                                                 Approve
                                             </Button>
-                                            {/* Simulate Super Admin Check - In real app, check current user role */}
                                             <Button
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={async () => {
-                                                    await databases.updateDocument(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.volunteersCollectionId, vol.$id, { role: 'admin' });
-                                                    setPendingVolunteers(prev => prev.map(p => p.$id === vol.$id ? { ...p, role: 'admin' } : p));
+                                                    try {
+                                                        await databases.updateDocument(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.volunteersCollectionId, volunteer.$id, { role: 'admin' });
+                                                        setPendingVolunteers(prev => prev.map(p => p.$id === volunteer.$id ? { ...p, role: 'admin' } : p));
+                                                    } catch (e) { console.error(e) }
                                                 }}
                                             >
                                                 Make Admin

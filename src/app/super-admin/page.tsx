@@ -137,7 +137,7 @@ export default function SuperAdminDashboard() {
     if (isLoading) return <div className="flex h-screen items-center justify-center">Loading Super Admin Panel...</div>
 
     return (
-        <div className="flex min-h-screen flex-col bg-gray-50 p-4 sm:p-8">
+        <div className="flex min-h-screen flex-col bg-background p-4 sm:p-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <h1 className="text-3xl font-bold">Super Admin Dashboard</h1>
                 <div className="flex gap-2">
@@ -191,7 +191,7 @@ export default function SuperAdminDashboard() {
                             {filteredUsers.map((user) => (
                                 <div
                                     key={user.$id}
-                                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-lg shadow-sm gap-4 border-l-4"
+                                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card border border-border p-4 rounded-lg shadow-sm gap-4 border-l-4"
                                     style={{
                                         borderLeftColor:
                                             user.role === 'super_admin' ? '#9333ea' :
@@ -202,26 +202,28 @@ export default function SuperAdminDashboard() {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
                                             <p className="font-semibold text-lg">{user.firstName} {user.lastName}</p>
-                                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${user.role === 'super_admin' ? 'bg-purple-100 text-purple-800' :
-                                                user.role === 'admin' ? 'bg-blue-100 text-blue-800' :
-                                                    'bg-gray-100 text-gray-800'
+                                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold border ${user.role === 'super_admin' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' :
+                                                user.role === 'admin' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' :
+                                                    'bg-muted text-muted-foreground border-border text-[10px]'
                                                 }`}>
                                                 {user.role === 'super_admin' ? 'SUPER ADMIN' : user.role.toUpperCase()}
                                             </span>
                                             {!user.isApproved && (
-                                                <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 font-medium">
+                                                <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 font-semibold text-[10px]">
                                                     PENDING
                                                 </span>
                                             )}
                                             {user.volunteerCategory && (
-                                                <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 font-medium">
+                                                <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 font-semibold text-[10px]">
                                                     {user.volunteerCategory === 'student' ? `Student - Grade ${user.grade}` : 'Adult'}
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-sm text-gray-600">{user.email}</p>
+                                        <p className="text-sm text-muted-foreground">{user.email}</p>
                                         {user.schoolName && (
-                                            <p className="text-xs text-gray-500 mt-1">🏫 {user.schoolName}</p>
+                                            <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1">
+                                                <span>🏫</span> {user.schoolName}
+                                            </p>
                                         )}
                                     </div>
 
