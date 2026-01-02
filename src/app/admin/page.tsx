@@ -7,64 +7,60 @@ import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { useRouter } from "next/navigation"
 
+import { useAuth } from "@/context/AuthContext"
+
 export default function AdminDashboard() {
     const router = useRouter()
+    const { user, volunteer, isLoading } = useAuth()
     const [pendingVolunteers, setPendingVolunteers] = useState<any[]>([])
     const [activeCheckins, setActiveCheckins] = useState<any[]>([])
     const [pendingReviews, setPendingReviews] = useState<any[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+
+    const fetchData = async () => {
+        try {
+            // Assuming user is authenticated and potentially admin status is handled by useAuth or a wrapper
+            // If not, a check like `if (!user || volunteer?.role !== 'admin') { router.push('/dashboard'); return; }` might be needed here.
+
+            // 1. Pending Volunteers
+            const volunteersRes = await databases.listDocuments(
+                APPWRITE_CONFIG.databaseId,
+                APPWRITE_CONFIG.volunteersCollectionId,
+                [Query.equal('isApproved', false)]
+            );
+            setPendingVolunteers(volunteersRes.documents);
+
+            // 2. Active Checkins (Current volunteers onsite)
+            const checkinsRes = await databases.listDocuments(
+                APPWRITE_CONFIG.databaseId,
+                APPWRITE_CONFIG.checkinsCollectionId,
+                [Query.equal('status', 'active')]
+            );
+            setActiveCheckins(checkinsRes.documents);
+
+            // 3. Pending Reviews (Completed check-ins needing approval)
+            const reviewsRes = await databases.listDocuments(
+                APPWRITE_CONFIG.databaseId,
+                APPWRITE_CONFIG.checkinsCollectionId,
+                [Query.equal('status', 'pending_review')]
+            );
+            setPendingReviews(reviewsRes.documents);
+
+        } catch (error: any) {
+            console.error("Failed to fetch admin dashboard data:", error);
+            // If useAuth doesn't handle redirection for unauthenticated users,
+            // you might still need a check here, e.g., if (error.code === 401) router.push("/login");
+        }
+    }
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Verify Admin
-                // In a real app, strict server-side check or stronger role check
-                // For now, client side check
-                const user = await account.get()
-                // Fetch profile to check role
-                const profile = await databases.listDocuments(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.volunteersCollectionId, [
-                    Query.equal('userId', user.$id)
-                ])
-                if (profile.documents.length === 0 || profile.documents[0].role !== 'admin') {
-                    // Redirect if not admin
-                    // router.push("/dashboard") 
-                }
-
-                // 1. Pending Volunteers
-                const volunteersRes = await databases.listDocuments(
-                    APPWRITE_CONFIG.databaseId,
-                    APPWRITE_CONFIG.volunteersCollectionId,
-                    [Query.equal('isApproved', false)]
-                );
-                setPendingVolunteers(volunteersRes.documents);
-
-                // 2. Active Checkins (Current volunteers onsite)
-                const checkinsRes = await databases.listDocuments(
-                    APPWRITE_CONFIG.databaseId,
-                    APPWRITE_CONFIG.checkinsCollectionId,
-                    [Query.equal('status', 'active')]
-                );
-                setActiveCheckins(checkinsRes.documents);
-
-                // 3. Pending Reviews (Completed check-ins needing approval)
-                const reviewsRes = await databases.listDocuments(
-                    APPWRITE_CONFIG.databaseId,
-                    APPWRITE_CONFIG.checkinsCollectionId,
-                    [Query.equal('status', 'pending_review')]
-                );
-                setPendingReviews(reviewsRes.documents);
-
-            } catch (error: any) {
-                // Silently redirect to login if not authenticated
-                if (error.code === 401 || error.type === 'general_unauthorized_scope') {
-                    router.push("/login")
-                }
-            } finally {
-                setIsLoading(false);
-            }
+        if (!isLoading && user) {
+            fetchData()
         }
-        fetchData();
-    }, [router])
+        // If user is null and not loading, it means they are not authenticated.
+        // The useAuth hook or a parent component should ideally handle redirection to login.
+        // If not, you might add: `if (!isLoading && !user) { router.push("/login"); }`
+    }, [isLoading, user])
+
 
     const approveVolunteer = async (id: string) => {
         try {

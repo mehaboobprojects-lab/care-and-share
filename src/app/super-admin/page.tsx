@@ -19,62 +19,60 @@ interface User {
     schoolName?: string
 }
 
+import { useAuth } from "@/context/AuthContext"
+
 export default function SuperAdminDashboard() {
     const router = useRouter()
-    const [allUsers, setAllUsers] = useState<User[]>([])
+    const { user, volunteer, isLoading: authLoading } = useAuth()
+    const [users, setUsers] = useState<User[]>([])
     const [filteredUsers, setFilteredUsers] = useState<User[]>([])
-    const [filter, setFilter] = useState<string>("all") // all, admin, volunteer, pending
-    const [isLoading, setIsLoading] = useState(true)
-    const [currentUser, setCurrentUser] = useState<any>(null)
+    const [filter, setFilter] = useState<'all' | 'admin' | 'volunteer' | 'pending'>('all')
+    const [dataLoading, setDataLoading] = useState(true)
+
+    const fetchUsers = async () => {
+        setDataLoading(true)
+        try {
+            // Verify Super Admin access
+            if (!volunteer || volunteer.role !== 'super_admin') {
+                router.push("/dashboard")
+                return
+            }
+
+            // Fetch ALL users
+            const usersRes = await databases.listDocuments(
+                APPWRITE_CONFIG.databaseId,
+                APPWRITE_CONFIG.volunteersCollectionId,
+                [Query.limit(100)]
+            )
+            setUsers(usersRes.documents as unknown as User[])
+            setFilteredUsers(usersRes.documents as unknown as User[])
+        } catch (error: any) {
+            console.error("Failed to fetch users:", error)
+        } finally {
+            setDataLoading(false)
+        }
+    }
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Verify Super Admin access
-                const user = await account.get()
-                const profile = await databases.listDocuments(
-                    APPWRITE_CONFIG.databaseId,
-                    APPWRITE_CONFIG.volunteersCollectionId,
-                    [Query.equal('userId', user.$id)]
-                )
-
-                if (profile.documents.length === 0 || profile.documents[0].role !== 'super_admin') {
-                    router.push("/dashboard")
-                    return
-                }
-
-                setCurrentUser(profile.documents[0])
-
-                // Fetch ALL users
-                const usersRes = await databases.listDocuments(
-                    APPWRITE_CONFIG.databaseId,
-                    APPWRITE_CONFIG.volunteersCollectionId,
-                    [Query.limit(100)] // Adjust limit as needed
-                )
-                setAllUsers(usersRes.documents as unknown as User[])
-                setFilteredUsers(usersRes.documents as unknown as User[])
-            } catch (error: any) {
-                // Silently redirect to login if not authenticated
-                router.push("/login")
-            } finally {
-                setIsLoading(false)
-            }
+        if (!authLoading && user) {
+            fetchUsers()
+        } else if (!authLoading && !user) {
+            router.push("/login")
         }
-        fetchData()
-    }, [router])
+    }, [authLoading, user, router])
 
     useEffect(() => {
         // Apply filter
         if (filter === "all") {
-            setFilteredUsers(allUsers)
+            setFilteredUsers(users)
         } else if (filter === "admin") {
-            setFilteredUsers(allUsers.filter(u => u.role === "admin"))
+            setFilteredUsers(users.filter(u => u.role === "admin"))
         } else if (filter === "volunteer") {
-            setFilteredUsers(allUsers.filter(u => u.role === "volunteer"))
+            setFilteredUsers(users.filter(u => u.role === "volunteer"))
         } else if (filter === "pending") {
-            setFilteredUsers(allUsers.filter(u => !u.isApproved))
+            setFilteredUsers(users.filter(u => !u.isApproved))
         }
-    }, [filter, allUsers])
+    }, [filter, users])
 
     const promoteToAdmin = async (userId: string) => {
         try {
@@ -84,7 +82,7 @@ export default function SuperAdminDashboard() {
                 userId,
                 { role: 'admin' }
             )
-            setAllUsers(prev => prev.map(u => u.$id === userId ? { ...u, role: 'admin' } : u))
+            setUsers(prev => prev.map(u => u.$id === userId ? { ...u, role: 'admin' } : u))
         } catch (error) {
             console.error(error)
         }
@@ -98,7 +96,7 @@ export default function SuperAdminDashboard() {
                 userId,
                 { role: 'volunteer' }
             )
-            setAllUsers(prev => prev.map(u => u.$id === userId ? { ...u, role: 'volunteer' } : u))
+            setUsers(prev => prev.map(u => u.$id === userId ? { ...u, role: 'volunteer' } : u))
         } catch (error) {
             console.error(error)
         }
@@ -112,7 +110,7 @@ export default function SuperAdminDashboard() {
                 userId,
                 { isApproved: true }
             )
-            setAllUsers(prev => prev.map(u => u.$id === userId ? { ...u, isApproved: true } : u))
+            setUsers(prev => prev.map(u => u.$id === userId ? { ...u, isApproved: true } : u))
         } catch (error) {
             console.error(error)
         }
@@ -128,13 +126,13 @@ export default function SuperAdminDashboard() {
                 APPWRITE_CONFIG.volunteersCollectionId,
                 userId
             )
-            setAllUsers(prev => prev.filter(u => u.$id !== userId))
+            setUsers(prev => prev.filter(u => u.$id !== userId))
         } catch (error) {
             console.error(error)
         }
     }
 
-    if (isLoading) return <div className="flex h-screen items-center justify-center">Loading Super Admin Panel...</div>
+    if (authLoading || dataLoading) return <div className="flex h-screen items-center justify-center">Loading Super Admin Panel...</div>
 
     return (
         <div className="flex min-h-screen flex-col bg-background p-4 sm:p-8">
@@ -153,28 +151,28 @@ export default function SuperAdminDashboard() {
                     onClick={() => setFilter("all")}
                     size="sm"
                 >
-                    All Users ({allUsers.length})
+                    All Users ({users.length})
                 </Button>
                 <Button
                     variant={filter === "admin" ? "default" : "outline"}
                     onClick={() => setFilter("admin")}
                     size="sm"
                 >
-                    Admins ({allUsers.filter(u => u.role === "admin").length})
+                    Admins ({users.filter(u => u.role === "admin").length})
                 </Button>
                 <Button
                     variant={filter === "volunteer" ? "default" : "outline"}
                     onClick={() => setFilter("volunteer")}
                     size="sm"
                 >
-                    Volunteers ({allUsers.filter(u => u.role === "volunteer").length})
+                    Volunteers ({users.filter(u => u.role === "volunteer").length})
                 </Button>
                 <Button
                     variant={filter === "pending" ? "default" : "outline"}
                     onClick={() => setFilter("pending")}
                     size="sm"
                 >
-                    Pending Approval ({allUsers.filter(u => !u.isApproved).length})
+                    Pending Approval ({users.filter(u => !u.isApproved).length})
                 </Button>
             </div>
 
@@ -227,7 +225,7 @@ export default function SuperAdminDashboard() {
                                         )}
                                     </div>
 
-                                    {user.$id !== currentUser?.$id && (
+                                    {user.$id !== volunteer?.$id && (
                                         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                                             {!user.isApproved && (
                                                 <Button
@@ -265,7 +263,7 @@ export default function SuperAdminDashboard() {
                                             </Button>
                                         </div>
                                     )}
-                                    {user.$id === currentUser?.$id && (
+                                    {user.$id === volunteer?.$id && (
                                         <span className="text-sm text-gray-500 italic">You</span>
                                     )}
                                 </div>

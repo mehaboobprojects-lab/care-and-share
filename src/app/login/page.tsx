@@ -26,8 +26,11 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
+import { useAuth } from "@/context/AuthContext"
+
 export default function LoginPage() {
     const router = useRouter()
+    const { refreshAuth, isLoading: authLoading } = useAuth()
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -39,34 +42,15 @@ export default function LoginPage() {
         resolver: zodResolver(loginSchema),
     })
 
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                await account.get()
-                router.push("/dashboard")
-            } catch (err) {
-                // Not logged in, stay on login page
-            }
-        }
-        checkAuth()
-    }, [router])
-
     async function onSubmit(data: LoginFormValues) {
         setIsLoading(true)
         setError(null)
 
         try {
-            // Check if user is already logged in to avoid "active session" error
-            try {
-                await account.get()
-                router.push("/dashboard")
-                return
-            } catch (e) {
-                // No session, proceed with login
-            }
-
             await account.createEmailPasswordSession(data.email, data.password)
-            router.push("/dashboard")
+            // Refresh authentication state in context
+            await refreshAuth()
+            // Redirection is handled by AuthProvider's useEffect
         } catch (err: any) {
             console.error("Login failed:", err)
             setError(err.message || "Invalid email or password.")
@@ -74,6 +58,8 @@ export default function LoginPage() {
             setIsLoading(false)
         }
     }
+
+    if (authLoading) return <div className="flex min-h-screen items-center justify-center">Loading...</div>
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">

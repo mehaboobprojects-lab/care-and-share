@@ -21,14 +21,15 @@ interface Dependent {
     managedBy?: string
 }
 
+import { useAuth } from "@/context/AuthContext"
+
 export default function ParentDashboard() {
     const router = useRouter()
+    const { user, volunteer, isLoading: authLoading } = useAuth()
     const [dependents, setDependents] = useState<Dependent[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+    const [dataLoading, setDataLoading] = useState(true)
     const [showAddForm, setShowAddForm] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
-    const [parentEmail, setParentEmail] = useState("")
-    const [currentUserId, setCurrentUserId] = useState("")
 
     // Form state
     const [formData, setFormData] = useState({
@@ -42,35 +43,37 @@ export default function ParentDashboard() {
         password: "",
     })
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const user = await account.get()
-                setCurrentUserId(user.$id)
-                setParentEmail(user.email)
-
-                // Fetch dependents where managedBy = current user ID OR contactEmail = current user email
-                const dependentsRes = await databases.listDocuments(
-                    APPWRITE_CONFIG.databaseId,
-                    APPWRITE_CONFIG.volunteersCollectionId,
-                    [
-                        Query.or([
-                            Query.equal('managedBy', user.$id),
-                            Query.equal('contactEmail', user.email)
-                        ]),
-                        Query.limit(100)
-                    ]
-                )
-                setDependents(dependentsRes.documents as unknown as Dependent[])
-            } catch (error: any) {
-                // Silently redirect to login if not authenticated
-                router.push("/login")
-            } finally {
-                setIsLoading(false)
-            }
+    const fetchDependents = async () => {
+        if (!user) return
+        setDataLoading(true)
+        try {
+            // Fetch dependents where managedBy = current user ID OR contactEmail = current user email
+            const dependentsRes = await databases.listDocuments(
+                APPWRITE_CONFIG.databaseId,
+                APPWRITE_CONFIG.volunteersCollectionId,
+                [
+                    Query.or([
+                        Query.equal('managedBy', user.$id),
+                        Query.equal('contactEmail', user.email)
+                    ]),
+                    Query.limit(100)
+                ]
+            )
+            setDependents(dependentsRes.documents as unknown as Dependent[])
+        } catch (error: any) {
+            console.error("Error fetching dependents:", error)
+        } finally {
+            setDataLoading(false)
         }
-        fetchData()
-    }, [router])
+    }
+
+    useEffect(() => {
+        if (!authLoading && user) {
+            fetchDependents()
+        } else if (!authLoading && !user) {
+            router.push("/login")
+        }
+    }, [authLoading, user, router])
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({
@@ -81,7 +84,7 @@ export default function ParentDashboard() {
 
     const handleAddDependent = async (e: React.FormEvent) => {
         e.preventDefault()
-        setIsLoading(true)
+        setDataLoading(true)
 
         try {
             // Create dependent's volunteer document
@@ -93,19 +96,19 @@ export default function ParentDashboard() {
                     userId: "", // No auth account for dependent initially
                     firstName: formData.firstName,
                     lastName: formData.lastName,
-                    email: formData.email || parentEmail, // Use parent email if not provided
+                    email: formData.email || user?.email || "",
                     phone: formData.phone,
                     volunteerCategory: "student",
                     contactRelationship: "parent",
-                    contactName: parentEmail.split('@')[0], // Simplified
-                    contactEmail: parentEmail,
+                    contactName: (user?.email || "").split('@')[0],
+                    contactEmail: user?.email || "",
                     contactPhone: formData.phone,
                     grade: formData.grade,
                     schoolName: formData.schoolName,
                     schoolAddress: formData.schoolAddress || "",
                     role: 'volunteer',
                     isApproved: false,
-                    managedBy: currentUserId,
+                    managedBy: user?.$id || "",
                     termsAccepted: true,
                     parentConsent: true,
                 }
@@ -117,8 +120,8 @@ export default function ParentDashboard() {
                 APPWRITE_CONFIG.volunteersCollectionId,
                 [
                     Query.or([
-                        Query.equal('managedBy', currentUserId),
-                        Query.equal('contactEmail', parentEmail)
+                        Query.equal('managedBy', user?.$id || ""),
+                        Query.equal('contactEmail', user?.email || "")
                     ]),
                     Query.limit(100)
                 ]
@@ -139,14 +142,14 @@ export default function ParentDashboard() {
             console.error("Error adding dependent:", error)
             alert("Failed to add dependent: " + error.message)
         } finally {
-            setIsLoading(false)
+            setDataLoading(false)
         }
     }
 
     const handleEditDependent = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!editingId) return
-        setIsLoading(true)
+        setDataLoading(true)
 
         try {
             await databases.updateDocument(
@@ -169,8 +172,8 @@ export default function ParentDashboard() {
                 APPWRITE_CONFIG.volunteersCollectionId,
                 [
                     Query.or([
-                        Query.equal('managedBy', currentUserId),
-                        Query.equal('contactEmail', parentEmail)
+                        Query.equal('managedBy', user?.$id || ""),
+                        Query.equal('contactEmail', user?.email || "")
                     ]),
                     Query.limit(100)
                 ]
@@ -212,7 +215,7 @@ export default function ParentDashboard() {
 
     const handleRemoveDependent = async (id: string) => {
         if (!confirm("Are you sure you want to remove this dependent?")) return
-        setIsLoading(true)
+        setDataLoading(true)
 
         try {
             await databases.deleteDocument(
@@ -225,11 +228,11 @@ export default function ParentDashboard() {
             console.error("Error removing dependent:", error)
             alert("Failed to remove dependent: " + error.message)
         } finally {
-            setIsLoading(false)
+            setDataLoading(false)
         }
     }
 
-    if (isLoading && dependents.length === 0) {
+    if (authLoading || (dataLoading && dependents.length === 0)) {
         return <div className="flex h-screen items-center justify-center">Loading...</div>
     }
 
@@ -323,7 +326,7 @@ export default function ParentDashboard() {
                             </div>
 
                             <div className="flex gap-2">
-                                <Button type="submit" disabled={isLoading}>
+                                <Button type="submit" disabled={dataLoading}>
                                     {editingId ? "Update" : "Add"} Dependent
                                 </Button>
                                 <Button

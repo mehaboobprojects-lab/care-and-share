@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react" // Added useEffect
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -9,8 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { account, databases, APPWRITE_CONFIG } from "@/lib/appwrite"
-import { ID } from "appwrite"
+import { ID, Query } from "appwrite" // Added Query
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/context/AuthContext" // Added useAuth
 
 const registrationSchema = z.object({
     // Step 1: Category
@@ -54,6 +55,7 @@ type RegistrationFormValues = z.infer<typeof registrationSchema>
 
 export function RegistrationMultiStep() {
     const router = useRouter()
+    const { refreshAuth } = useAuth() // Use refreshAuth from context
     const [currentStep, setCurrentStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -106,22 +108,24 @@ export function RegistrationMultiStep() {
         setError(null)
 
         try {
-            // Create Appwrite Account
-            const user = await account.create(
-                ID.unique(),
-                data.contactEmail,
-                data.password,
-                `${data.firstName} ${data.lastName}`
-            )
-
-            // Create Session (only if not already logged in)
+            // Check if already logged in to avoid "active session" error
             try {
                 await account.get()
-                // Already has a session, maybe redirecting elsewhere?
+                // If logged in, maybe we shouldn't be here, but let's proceed to document creation if needed
             } catch (e) {
-                // No session, create one
+                // Create Appwrite Account
+                await account.create(
+                    ID.unique(),
+                    data.contactEmail,
+                    data.password,
+                    `${data.firstName} ${data.lastName}`
+                )
+
+                // Create Session
                 await account.createEmailPasswordSession(data.contactEmail, data.password)
             }
+
+            const currentUser = await account.get()
 
             // Create Volunteer Document
             await databases.createDocument(
@@ -129,7 +133,7 @@ export function RegistrationMultiStep() {
                 APPWRITE_CONFIG.volunteersCollectionId,
                 ID.unique(),
                 {
-                    userId: user.$id,
+                    userId: currentUser.$id,
                     firstName: data.firstName,
                     lastName: data.lastName,
                     email: data.contactEmail,
@@ -150,13 +154,12 @@ export function RegistrationMultiStep() {
                     parentConsent: data.parentConsent || false,
                     role: 'volunteer',
                     isApproved: false,
-                    age: 0, // Legacy field, can remove later
-                    relationshipType: data.contactRelationship, // Legacy field mapping
-                    schoolGrade: data.grade || "", // Legacy field mapping
                 }
             )
 
-            router.push("/dashboard")
+            // Refresh authentication state in context
+            await refreshAuth()
+            // Redirection is handled by AuthProvider's useEffect
         } catch (err: any) {
             console.error("Registration failed:", err)
             setError(err.message || "Registration failed. Please try again.")

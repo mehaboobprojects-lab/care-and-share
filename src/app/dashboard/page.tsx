@@ -15,55 +15,14 @@ interface Volunteer extends Models.Document {
     isApproved: boolean;
 }
 
+import { useAuth } from "@/context/AuthContext"
+
 export default function DashboardPage() {
     const router = useRouter()
-    const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null)
-    const [volunteer, setVolunteer] = useState<Volunteer | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
-
-    useEffect(() => {
-        async function checkSession() {
-            try {
-                const sessionUser = await account.get();
-                setUser(sessionUser);
-
-                // Fetch volunteer profile
-                const response = await databases.listDocuments(
-                    APPWRITE_CONFIG.databaseId,
-                    APPWRITE_CONFIG.volunteersCollectionId,
-                    [Query.equal('userId', sessionUser.$id)]
-                );
-
-                if (response.documents.length > 0) {
-                    const volunteerData = response.documents[0] as unknown as Volunteer;
-                    setVolunteer(volunteerData);
-
-                    // Redirect based on role
-                    if (volunteerData.role === 'super_admin') {
-                        router.push('/super-admin');
-                    } else if (volunteerData.role === 'admin') {
-                        router.push('/admin');
-                    } else if (volunteerData.role === 'parent') {
-                        router.push('/parent');
-                    }
-                } else {
-                    // Handle edge case where auth exists but profile doesn't?
-                    console.error("No volunteer profile found")
-                }
-
-            } catch (err: any) {
-                // Silently redirect to login if not authenticated
-                router.push("/login")
-            } finally {
-                setIsLoading(false);
-            }
-        }
-        checkSession();
-    }, [router]);
+    const { user, volunteer, isLoading, logout } = useAuth()
 
     const handleLogout = async () => {
-        await account.deleteSession('current');
-        router.push("/login");
+        await logout()
     }
 
     if (isLoading) return <div className="flex h-screen items-center justify-center">Loading...</div>
