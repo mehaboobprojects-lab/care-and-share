@@ -42,8 +42,7 @@ export default function DashboardPage() {
                 }
 
             } catch (err: any) {
-                console.error("Not logged in", err)
-                // Redirect to login if not authenticated
+                // Silently redirect to login if not authenticated
                 router.push("/login")
             } finally {
                 setIsLoading(false);

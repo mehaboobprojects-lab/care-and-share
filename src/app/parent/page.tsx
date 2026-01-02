@@ -63,13 +63,8 @@ export default function ParentDashboard() {
                 )
                 setDependents(dependentsRes.documents as unknown as Dependent[])
             } catch (error: any) {
-                console.error("Error fetching dependents", error)
-                // Redirect to login if not authenticated
-                if (error.code === 401 || error.type === 'general_unauthorized_scope') {
-                    router.push("/login")
-                } else {
-                    router.push("/login")
-                }
+                // Silently redirect to login if not authenticated
+                router.push("/login")
             } finally {
                 setIsLoading(false)
             }

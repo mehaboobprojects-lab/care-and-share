@@ -54,8 +54,7 @@ export default function SuperAdminDashboard() {
                 setAllUsers(usersRes.documents as unknown as User[])
                 setFilteredUsers(usersRes.documents as unknown as User[])
             } catch (error: any) {
-                console.error("Error fetching super admin data", error)
-                // Redirect to login if not authenticated
+                // Silently redirect to login if not authenticated
                 router.push("/login")
             } finally {
                 setIsLoading(false)

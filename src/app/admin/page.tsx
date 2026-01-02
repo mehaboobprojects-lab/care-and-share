@@ -55,8 +55,7 @@ export default function AdminDashboard() {
                 setPendingReviews(reviewsRes.documents);
 
             } catch (error: any) {
-                console.error("Error fetching admin data", error)
-                // Redirect to login if not authenticated
+                // Silently redirect to login if not authenticated
                 if (error.code === 401 || error.type === 'general_unauthorized_scope') {
                     router.push("/login")
                 }
@@ -90,7 +89,7 @@ export default function AdminDashboard() {
         }
     }
 
-    if (isLoading) return <div>Loading Admin Panel...</div>
+    if (isLoading) return null
 
     return (
         <div className="flex min-h-screen flex-col bg-gray-50 p-8">
