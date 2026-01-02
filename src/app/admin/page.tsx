@@ -54,8 +54,12 @@ export default function AdminDashboard() {
                 );
                 setPendingReviews(reviewsRes.documents);
 
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Error fetching admin data", error)
+                // Redirect to login if not authenticated
+                if (error.code === 401 || error.type === 'general_unauthorized_scope') {
+                    router.push("/login")
+                }
             } finally {
                 setIsLoading(false);
             }

@@ -41,8 +41,9 @@ export default function DashboardPage() {
                     console.error("No volunteer profile found")
                 }
 
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Not logged in", err)
+                // Redirect to login if not authenticated
                 router.push("/login")
             } finally {
                 setIsLoading(false);
