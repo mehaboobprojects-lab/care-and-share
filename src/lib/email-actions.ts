@@ -1,40 +1,43 @@
 "use server"
 
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
-// Initialize Resend lazily to prevent crashes if the API key is missing during module evaluation
-let resendInstance: Resend | null = null;
+// Initialize Nodemailer transporter lazily to prevent crashes if environment variables are missing
+let transporterInstance: nodemailer.Transporter | null = null;
 
-function getResend() {
-  if (!resendInstance && process.env.RESEND_API_KEY) {
-    resendInstance = new Resend(process.env.RESEND_API_KEY);
+function getTransporter() {
+  if (!transporterInstance && process.env.GMAIL_USER && process.env.GMAIL_PASS) {
+    transporterInstance = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS,
+      },
+    });
   }
 
-  if (!resendInstance) {
-    const keys = Object.keys(process.env).filter(k => k.includes('RESEND'));
-    console.log("Debugging Environment Variables - Found RESEND related keys:", keys);
+  if (!transporterInstance) {
+    const keys = Object.keys(process.env).filter(k => k.includes('GMAIL'));
+    console.log("Debugging Environment Variables - Found GMAIL related keys:", keys);
   }
 
-  return resendInstance;
+  return transporterInstance;
 }
 
 export async function sendApprovalEmail(email: string, firstName: string) {
-  const resend = getResend();
+  const transporter = getTransporter();
 
-  if (!resend) {
-    console.warn("RESEND_API_KEY is not set in environment variables. Email will not be sent.");
-    return { success: false, error: "API Key missing" };
+  if (!transporter) {
+    console.warn("GMAIL_USER or GMAIL_PASS is not set in environment variables. Email will not be sent.");
+    return { success: false, error: "Email configuration missing (GMAIL_USER/PASS)" };
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  console.log("RESEND_API_KEY found, length:", apiKey?.length || 0);
-
-  console.log(`Attempting to send approval email to: ${email}`);
+  console.log(`Attempting to send Gmail approval email from ${process.env.GMAIL_USER} to: ${email}`);
 
   try {
-    const payload = {
-      from: 'onboarding@resend.dev',
-      to: [email],
+    const mailOptions = {
+      from: `"Care and Share" <${process.env.GMAIL_USER}>`,
+      to: email,
       subject: 'Your Care and Share Account has been Approved! 🎉',
       html: `
         <div style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
@@ -53,18 +56,11 @@ export async function sendApprovalEmail(email: string, firstName: string) {
       `,
     };
 
-    const { data, error } = await resend.emails.send(payload);
-
-    if (error) {
-      console.error("Resend API Error:", JSON.stringify(error, null, 2));
-      // Return the message string from the Resend error object
-      return { success: false, error: error.message || "Resend API error" };
-    }
-
-    console.log("Resend API Success Data:", JSON.stringify(data, null, 2));
-    return { success: true, data };
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Gmail sent successfully:", info.messageId);
+    return { success: true, data: { id: info.messageId } };
   } catch (error: any) {
-    console.error("Server Action Exception:", error);
-    return { success: false, error: error?.message || "Internal server error" };
+    console.error("Nodemailer Error:", error);
+    return { success: false, error: error.message || "Failed to send email via Gmail" };
   }
 }
