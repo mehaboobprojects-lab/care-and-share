@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { useRouter } from "next/navigation"
 
 import { useAuth } from "@/context/AuthContext"
+import { sendApprovalEmail } from "@/lib/email-actions"
 
 export default function AdminDashboard() {
     const router = useRouter()
@@ -64,10 +65,19 @@ export default function AdminDashboard() {
 
     const approveVolunteer = async (id: string) => {
         try {
+            // Find the volunteer to get their email and name
+            const volunteerToApprove = pendingVolunteers.find(v => v.$id === id);
+
             await databases.updateDocument(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.volunteersCollectionId, id, {
                 isApproved: true
             });
+
             setPendingVolunteers(prev => prev.filter(v => v.$id !== id));
+
+            // Send approval email
+            if (volunteerToApprove?.email) {
+                await sendApprovalEmail(volunteerToApprove.email, volunteerToApprove.firstName);
+            }
         } catch (error) {
             console.error(error);
         }

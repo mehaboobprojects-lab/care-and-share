@@ -20,6 +20,7 @@ interface User {
 }
 
 import { useAuth } from "@/context/AuthContext"
+import { sendApprovalEmail } from "@/lib/email-actions"
 
 export default function SuperAdminDashboard() {
     const router = useRouter()
@@ -104,6 +105,8 @@ export default function SuperAdminDashboard() {
 
     const approveUser = async (userId: string) => {
         try {
+            const userToApprove = users.find(u => u.$id === userId);
+
             await databases.updateDocument(
                 APPWRITE_CONFIG.databaseId,
                 APPWRITE_CONFIG.volunteersCollectionId,
@@ -111,6 +114,11 @@ export default function SuperAdminDashboard() {
                 { isApproved: true }
             )
             setUsers(prev => prev.map(u => u.$id === userId ? { ...u, isApproved: true } : u))
+
+            // Send approval email
+            if (userToApprove?.email) {
+                await sendApprovalEmail(userToApprove.email, userToApprove.firstName);
+            }
         } catch (error) {
             console.error(error)
         }
