@@ -65,8 +65,10 @@ export default function AdminDashboard() {
 
     const approveVolunteer = async (id: string) => {
         try {
+            console.log(`Approving volunteer: ${id}`);
             // Find the volunteer to get their email and name
             const volunteerToApprove = pendingVolunteers.find(v => v.$id === id);
+            console.log(`Volunteer email found: ${volunteerToApprove?.email}`);
 
             await databases.updateDocument(APPWRITE_CONFIG.databaseId, APPWRITE_CONFIG.volunteersCollectionId, id, {
                 isApproved: true
@@ -76,7 +78,11 @@ export default function AdminDashboard() {
 
             // Send approval email
             if (volunteerToApprove?.email) {
-                await sendApprovalEmail(volunteerToApprove.email, volunteerToApprove.firstName);
+                console.log(`Triggering approval email to ${volunteerToApprove.email}`);
+                const res = await sendApprovalEmail(volunteerToApprove.email, volunteerToApprove.firstName);
+                console.log(`Email action response:`, res);
+            } else {
+                console.warn(`No email found for volunteer ${id}, skipping notification.`);
             }
         } catch (error) {
             console.error(error);
