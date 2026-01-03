@@ -6,12 +6,15 @@ import nodemailer from 'nodemailer';
 let transporterInstance: nodemailer.Transporter | null = null;
 
 function getTransporter() {
-  if (!transporterInstance && process.env.GMAIL_USER && process.env.GMAIL_PASS) {
+  const user = process.env.GMAIL_USER?.trim();
+  const pass = process.env.GMAIL_PASS?.trim();
+
+  if (!transporterInstance && user && pass) {
     transporterInstance = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS,
+        user: user,
+        pass: pass,
       },
     });
   }
