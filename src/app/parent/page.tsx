@@ -194,7 +194,7 @@ export default function ParentDashboard() {
             console.error("Error updating dependent:", error)
             alert("Failed to update dependent: " + error.message)
         } finally {
-            setIsLoading(false)
+            setDataLoading(false)
         }
     }
 
