@@ -7,11 +7,14 @@ let transporterInstance: nodemailer.Transporter | null = null;
 
 function getTransporter() {
   const user = process.env.GMAIL_USER?.trim();
-  const pass = process.env.GMAIL_PASS?.trim();
+  const pass = process.env.GMAIL_PASS?.replace(/\s+/g, '');
 
   if (!transporterInstance && user && pass) {
+    console.log(`Initializing transporter. User: ${user}, Pass length: ${pass.length}`);
     transporterInstance = nodemailer.createTransport({
-      service: 'gmail',
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       auth: {
         user: user,
         pass: pass,
