@@ -81,8 +81,15 @@ export default function AdminDashboard() {
                 console.log(`Triggering approval email to ${volunteerToApprove.email}`);
                 const res = await sendApprovalEmail(volunteerToApprove.email, volunteerToApprove.firstName);
                 console.log(`Email action response:`, res);
+                if (res.success) {
+                    alert(`Volunteer approved and welcome email sent to ${volunteerToApprove.email}`);
+                } else {
+                    const errorMsg = typeof res.error === 'string' ? res.error : (res.error as any)?.message || 'Unknown error';
+                    alert(`Volunteer approved, but email failed: ${errorMsg}`);
+                }
             } else {
                 console.warn(`No email found for volunteer ${id}, skipping notification.`);
+                alert("Volunteer approved (no email found to notify)");
             }
         } catch (error) {
             console.error(error);

@@ -105,7 +105,9 @@ export default function SuperAdminDashboard() {
 
     const approveUser = async (userId: string) => {
         try {
+            console.log(`Super Admin approving user: ${userId}`);
             const userToApprove = users.find(u => u.$id === userId);
+            console.log(`User email found: ${userToApprove?.email}`);
 
             await databases.updateDocument(
                 APPWRITE_CONFIG.databaseId,
@@ -117,7 +119,18 @@ export default function SuperAdminDashboard() {
 
             // Send approval email
             if (userToApprove?.email) {
-                await sendApprovalEmail(userToApprove.email, userToApprove.firstName);
+                console.log(`Triggering approval email to ${userToApprove.email}`);
+                const res = await sendApprovalEmail(userToApprove.email, userToApprove.firstName);
+                console.log(`Email action response:`, res);
+                if (res.success) {
+                    alert(`User approved and welcome email sent to ${userToApprove.email}`);
+                } else {
+                    const errorMsg = typeof res.error === 'string' ? res.error : (res.error as any)?.message || 'Unknown error';
+                    alert(`User approved, but email failed: ${errorMsg}`);
+                }
+            } else {
+                console.warn(`No email found for user ${userId}, skipping notification.`);
+                alert("User approved (no email found to notify)");
             }
         } catch (error) {
             console.error(error)

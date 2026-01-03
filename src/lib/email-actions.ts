@@ -9,6 +9,12 @@ function getResend() {
   if (!resendInstance && process.env.RESEND_API_KEY) {
     resendInstance = new Resend(process.env.RESEND_API_KEY);
   }
+
+  if (!resendInstance) {
+    const keys = Object.keys(process.env).filter(k => k.includes('RESEND'));
+    console.log("Debugging Environment Variables - Found RESEND related keys:", keys);
+  }
+
   return resendInstance;
 }
 
@@ -27,7 +33,7 @@ export async function sendApprovalEmail(email: string, firstName: string) {
 
   try {
     const payload = {
-      from: 'Care and Share <onboarding@resend.dev>',
+      from: 'onboarding@resend.dev',
       to: [email],
       subject: 'Your Care and Share Account has been Approved! 🎉',
       html: `
@@ -50,14 +56,15 @@ export async function sendApprovalEmail(email: string, firstName: string) {
     const { data, error } = await resend.emails.send(payload);
 
     if (error) {
-      console.error("Resend Error:", JSON.stringify(error, null, 2));
-      return { success: false, error };
+      console.error("Resend API Error:", JSON.stringify(error, null, 2));
+      // Return the message string from the Resend error object
+      return { success: false, error: error.message || "Resend API error" };
     }
 
-    console.log("Email sent successfully:", data?.id);
+    console.log("Resend API Success Data:", JSON.stringify(data, null, 2));
     return { success: true, data };
-  } catch (error) {
-    console.error("Unexpected Email Error:", error);
-    return { success: false, error };
+  } catch (error: any) {
+    console.error("Server Action Exception:", error);
+    return { success: false, error: error?.message || "Internal server error" };
   }
 }
