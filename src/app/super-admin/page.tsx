@@ -159,10 +159,6 @@ export default function SuperAdminDashboard() {
         <div className="flex min-h-screen flex-col bg-background p-4 sm:p-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <h1 className="text-3xl font-bold">Super Admin Dashboard</h1>
-                <div className="flex gap-2">
-                    <Button onClick={() => router.push('/dashboard')} variant="outline">My Dashboard</Button>
-                    <Button onClick={() => router.push('/admin')} variant="outline">Admin View</Button>
-                </div>
             </div>
 
             {/* Filter Tabs */}
