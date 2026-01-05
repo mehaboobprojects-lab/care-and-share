@@ -73,45 +73,51 @@ export default function LoginPage() {
     if (authLoading) return <div className="flex min-h-screen items-center justify-center">Loading...</div>
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-            <Card className="w-full max-w-md">
-                <CardHeader>
-                    <CardTitle>Login</CardTitle>
-                    <CardDescription>
-                        Welcome back to Care and Share.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" {...register("email")} />
-                            {errors.email && (
-                                <p className="text-xs text-red-500">{errors.email.message}</p>
-                            )}
-                        </div>
+        <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white selection:bg-teal-500 selection:text-white relative overflow-hidden px-4 py-12 sm:px-6 lg:px-8">
+            {/* Background Gradients */}
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+            <div className="absolute top-0 right-1/4 w-96 h-96 bg-teal-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+            <div className="absolute -bottom-8 left-1/3 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input id="password" type="password" {...register("password")} />
-                            {errors.password && (
-                                <p className="text-xs text-red-500">{errors.password.message}</p>
-                            )}
-                        </div>
+            <div className="relative z-10 w-full max-w-md">
+                <Card className="w-full max-w-md">
+                    <CardHeader>
+                        <CardTitle>Login</CardTitle>
+                        <CardDescription>
+                            Welcome back to Care and Share.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email</Label>
+                                <Input id="email" type="email" {...register("email")} />
+                                {errors.email && (
+                                    <p className="text-xs text-red-500">{errors.email.message}</p>
+                                )}
+                            </div>
 
-                        {error && <p className="text-sm text-red-500">{error}</p>}
+                            <div className="space-y-2">
+                                <Label htmlFor="password">Password</Label>
+                                <Input id="password" type="password" {...register("password")} />
+                                {errors.password && (
+                                    <p className="text-xs text-red-500">{errors.password.message}</p>
+                                )}
+                            </div>
 
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? "Logging in..." : "Login"}
-                        </Button>
-                    </form>
-                </CardContent>
-                <CardFooter className="flex justify-center">
-                    <p className="text-sm text-gray-500">
-                        Don't have an account? <Link href="/register" className="text-blue-600 hover:underline">Register</Link>
-                    </p>
-                </CardFooter>
-            </Card>
-        </div>
-    )
+                            {error && <p className="text-sm text-red-500">{error}</p>}
+
+                            <Button type="submit" className="w-full" disabled={isLoading}>
+                                {isLoading ? "Logging in..." : "Login"}
+                            </Button>
+                        </form>
+                    </CardContent>
+                    <CardFooter className="flex justify-center">
+                        <p className="text-sm text-gray-500">
+                            Don't have an account? <Link href="/register" className="text-blue-600 hover:underline">Register</Link>
+                        </p>
+                    </CardFooter>
+                </Card>
+            </div>
+            )
 }
