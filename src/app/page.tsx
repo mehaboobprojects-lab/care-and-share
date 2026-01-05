@@ -8,14 +8,14 @@ export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-900 text-white selection:bg-teal-500 selection:text-white">
       <header className="absolute inset-x-0 top-0 z-50">
-        <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
+        <nav className="flex items-center justify-between p-4 lg:px-8" aria-label="Global">
           <div className="flex lg:flex-1">
             <Link href="/" className="-m-1.5 p-1.5 text-2xl font-bold tracking-tight text-teal-400 flex items-center gap-2 whitespace-nowrap">
               <span>🍞</span>
               <span>Care & Share</span>
             </Link>
           </div>
-          <div className="flex gap-x-12">
+          <div className="flex gap-x-4 lg:gap-x-12">
             <Link href="/login" className="text-sm font-semibold leading-6 text-white hover:text-teal-300 transition-colors">
               Log in
             </Link>
