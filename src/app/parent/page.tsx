@@ -8,6 +8,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
+import { CheckInManager } from "@/components/check-in-manager"
+import { useAuth } from "@/context/AuthContext"
 
 interface Dependent {
     $id: string
@@ -21,8 +23,6 @@ interface Dependent {
     managedBy?: string
 }
 
-import { useAuth } from "@/context/AuthContext"
-
 export default function ParentDashboard() {
     const router = useRouter()
     const { user, volunteer, isLoading: authLoading } = useAuth()
@@ -30,6 +30,7 @@ export default function ParentDashboard() {
     const [dataLoading, setDataLoading] = useState(true)
     const [showAddForm, setShowAddForm] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
+    const [activeCheckIn, setActiveCheckIn] = useState<any>(null)
 
     // Form state
     const [formData, setFormData] = useState({
@@ -37,17 +38,19 @@ export default function ParentDashboard() {
         lastName: "",
         email: "",
         phone: "",
+        age: "",
         grade: "",
         schoolName: "",
         schoolAddress: "",
+        volunteerCategory: "student" as "student" | "adult",
         password: "",
     })
 
     const fetchDependents = async () => {
-        if (!user) return
+        if (!user || !volunteer) return
         setDataLoading(true)
         try {
-            // Fetch dependents where managedBy = current user ID OR contactEmail = current user email
+            // 1. Fetch dependents
             const dependentsRes = await databases.listDocuments(
                 APPWRITE_CONFIG.databaseId,
                 APPWRITE_CONFIG.volunteersCollectionId,
@@ -56,12 +59,33 @@ export default function ParentDashboard() {
                         Query.equal('managedBy', user.$id),
                         Query.equal('contactEmail', user.email)
                     ]),
+                    Query.notEqual('$id', volunteer.$id),
                     Query.limit(100)
                 ]
             )
-            setDependents(dependentsRes.documents as unknown as Dependent[])
+            // Ensure uniqueness by ID and filter out parent
+            const uniqueMap = new Map();
+            dependentsRes.documents.forEach(doc => {
+                if (doc.$id !== volunteer.$id) {
+                    uniqueMap.set(doc.$id, doc);
+                }
+            });
+            setDependents(Array.from(uniqueMap.values()) as unknown as Dependent[])
+
+            // 2. Fetch parent's own active check-in
+            const activeRes = await databases.listDocuments(
+                APPWRITE_CONFIG.databaseId,
+                APPWRITE_CONFIG.checkinsCollectionId,
+                [
+                    Query.equal('volunteerId', volunteer.$id),
+                    Query.equal('status', 'active'),
+                    Query.limit(1)
+                ]
+            )
+            if (activeRes.total > 0) setActiveCheckIn(activeRes.documents[0])
+            else setActiveCheckIn(null)
         } catch (error: any) {
-            console.error("Error fetching dependents:", error)
+            console.error("Error fetching data:", error)
         } finally {
             setDataLoading(false)
         }
@@ -96,16 +120,17 @@ export default function ParentDashboard() {
                     userId: "", // No auth account for dependent initially
                     firstName: formData.firstName,
                     lastName: formData.lastName,
-                    email: formData.email || user?.email || "",
+                    email: formData.email,
                     phone: formData.phone,
-                    volunteerCategory: "student",
+                    volunteerCategory: formData.volunteerCategory,
                     contactRelationship: "parent",
-                    contactName: (user?.email || "").split('@')[0],
+                    contactName: volunteer?.firstName + " " + volunteer?.lastName,
                     contactEmail: user?.email || "",
-                    contactPhone: formData.phone,
-                    grade: formData.grade,
-                    schoolName: formData.schoolName,
-                    schoolAddress: formData.schoolAddress || "",
+                    contactPhone: volunteer?.phone || "",
+                    age: formData.volunteerCategory === 'student' ? parseInt(formData.age) : null,
+                    grade: formData.volunteerCategory === 'student' ? formData.grade : "",
+                    schoolName: formData.volunteerCategory === 'student' ? formData.schoolName : "",
+                    schoolAddress: formData.volunteerCategory === 'student' ? formData.schoolAddress : "",
                     role: 'volunteer',
                     isApproved: false,
                     managedBy: user?.$id || "",
@@ -114,30 +139,9 @@ export default function ParentDashboard() {
                 }
             )
 
-            // Refresh list
-            const dependentsRes = await databases.listDocuments(
-                APPWRITE_CONFIG.databaseId,
-                APPWRITE_CONFIG.volunteersCollectionId,
-                [
-                    Query.or([
-                        Query.equal('managedBy', user?.$id || ""),
-                        Query.equal('contactEmail', user?.email || "")
-                    ]),
-                    Query.limit(100)
-                ]
-            )
-            setDependents(dependentsRes.documents as unknown as Dependent[])
+            await fetchDependents()
             setShowAddForm(false)
-            setFormData({
-                firstName: "",
-                lastName: "",
-                email: "",
-                phone: "",
-                grade: "",
-                schoolName: "",
-                schoolAddress: "",
-                password: "",
-            })
+            resetForm()
         } catch (error: any) {
             console.error("Error adding dependent:", error)
             alert("Failed to add dependent: " + error.message)
@@ -160,42 +164,39 @@ export default function ParentDashboard() {
                     firstName: formData.firstName,
                     lastName: formData.lastName,
                     phone: formData.phone,
-                    grade: formData.grade,
-                    schoolName: formData.schoolName,
-                    schoolAddress: formData.schoolAddress,
+                    email: formData.email,
+                    volunteerCategory: formData.volunteerCategory,
+                    age: formData.volunteerCategory === 'student' ? parseInt(formData.age) : null,
+                    grade: formData.volunteerCategory === 'student' ? formData.grade : "",
+                    schoolName: formData.volunteerCategory === 'student' ? formData.schoolName : "",
+                    schoolAddress: formData.volunteerCategory === 'student' ? formData.schoolAddress : "",
                 }
             )
 
-            // Refresh list
-            const dependentsRes = await databases.listDocuments(
-                APPWRITE_CONFIG.databaseId,
-                APPWRITE_CONFIG.volunteersCollectionId,
-                [
-                    Query.or([
-                        Query.equal('managedBy', user?.$id || ""),
-                        Query.equal('contactEmail', user?.email || "")
-                    ]),
-                    Query.limit(100)
-                ]
-            )
-            setDependents(dependentsRes.documents as unknown as Dependent[])
+            await fetchDependents()
             setEditingId(null)
-            setFormData({
-                firstName: "",
-                lastName: "",
-                email: "",
-                phone: "",
-                grade: "",
-                schoolName: "",
-                schoolAddress: "",
-                password: "",
-            })
+            resetForm()
         } catch (error: any) {
             console.error("Error updating dependent:", error)
             alert("Failed to update dependent: " + error.message)
         } finally {
             setDataLoading(false)
         }
+    }
+
+    const resetForm = () => {
+        setFormData({
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+            age: "",
+            grade: "",
+            schoolName: "",
+            schoolAddress: "",
+            volunteerCategory: "student",
+            password: "",
+        })
     }
 
     const startEdit = (dependent: Dependent) => {
@@ -205,9 +206,11 @@ export default function ParentDashboard() {
             lastName: dependent.lastName,
             email: dependent.email,
             phone: dependent.phone,
+            age: (dependent as any).age?.toString() || "",
             grade: dependent.grade || "",
             schoolName: dependent.schoolName || "",
             schoolAddress: "",
+            volunteerCategory: (dependent as any).volunteerCategory || "student",
             password: "",
         })
         setShowAddForm(false)
@@ -240,8 +243,34 @@ export default function ParentDashboard() {
         <div className="flex min-h-screen flex-col bg-background p-4 sm:p-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <h1 className="text-3xl font-bold">Parent Dashboard</h1>
-                <Button onClick={() => router.push('/dashboard')} variant="outline">My Dashboard</Button>
             </div>
+
+            {/* Collective Check-in Section */}
+            {volunteer && (volunteer.isApproved || dependents.some(d => d.isApproved)) && (
+                <Card className="mb-8 border-primary/20 shadow-md">
+                    <CardHeader className="bg-primary/5">
+                        <CardTitle className="flex items-center gap-2">
+                            <span>🚀</span> Program Check-in
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">Select everyone who arrived for today's program and click start.</p>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                        <CheckInManager
+                            volunteerId={volunteer.$id}
+                            existingCheckIn={activeCheckIn}
+                            volunteerIds={Array.from(new Set([
+                                volunteer.$id,
+                                ...dependents.filter(d => d.isApproved).map(d => d.$id)
+                            ]))}
+                            volunteerNames={{
+                                [volunteer.$id]: "Self (Parent)",
+                                ...Object.fromEntries(dependents.map(d => [d.$id, d.firstName]))
+                            }}
+                            onStatusChange={fetchDependents}
+                        />
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Add New Dependent Button */}
             {!showAddForm && !editingId && (
@@ -257,7 +286,33 @@ export default function ParentDashboard() {
                         <CardTitle>{editingId ? "Edit Dependent" : "Add New Dependent"}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={editingId ? handleEditDependent : handleAddDependent} className="space-y-4">
+                        <form onSubmit={editingId ? handleEditDependent : handleAddDependent} className="space-y-6">
+                            <div className="space-y-4">
+                                <Label>Dependent Type</Label>
+                                <div className="flex gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="volunteerCategory"
+                                            value="student"
+                                            checked={formData.volunteerCategory === "student"}
+                                            onChange={handleInputChange}
+                                        />
+                                        Student (Grade 6-12)
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="volunteerCategory"
+                                            value="adult"
+                                            checked={formData.volunteerCategory === "adult"}
+                                            onChange={handleInputChange}
+                                        />
+                                        Adult
+                                    </label>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <Label htmlFor="firstName">First Name *</Label>
@@ -281,49 +336,76 @@ export default function ParentDashboard() {
                                 </div>
                             </div>
 
-                            <div>
-                                <Label htmlFor="phone">Phone Number *</Label>
-                                <Input
-                                    id="phone"
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleInputChange}
-                                    required
-                                />
-                            </div>
-
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <Label htmlFor="grade">Grade *</Label>
-                                    <select
-                                        id="grade"
-                                        name="grade"
-                                        value={formData.grade}
+                                    <Label htmlFor="email">Email {formData.volunteerCategory === 'student' ? '(Optional)' : '*'}</Label>
+                                    <Input
+                                        id="email"
+                                        name="email"
+                                        type="email"
+                                        value={formData.email}
                                         onChange={handleInputChange}
-                                        required
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                    >
-                                        <option value="">Select Grade</option>
-                                        <option value="6">6th Grade</option>
-                                        <option value="7">7th Grade</option>
-                                        <option value="8">8th Grade</option>
-                                        <option value="9">9th Grade</option>
-                                        <option value="10">10th Grade</option>
-                                        <option value="11">11th Grade</option>
-                                        <option value="12">12th Grade</option>
-                                    </select>
+                                        required={formData.volunteerCategory === 'adult'}
+                                    />
                                 </div>
                                 <div>
-                                    <Label htmlFor="schoolName">School Name *</Label>
+                                    <Label htmlFor="phone">Phone Number {formData.volunteerCategory === 'student' ? '(Optional)' : '*'}</Label>
                                     <Input
-                                        id="schoolName"
-                                        name="schoolName"
-                                        value={formData.schoolName}
+                                        id="phone"
+                                        name="phone"
+                                        value={formData.phone}
                                         onChange={handleInputChange}
-                                        required
+                                        required={formData.volunteerCategory === 'adult'}
                                     />
                                 </div>
                             </div>
+
+                            {formData.volunteerCategory === "student" && (
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t pt-4">
+                                    <div>
+                                        <Label htmlFor="age">Age *</Label>
+                                        <Input
+                                            id="age"
+                                            name="age"
+                                            type="number"
+                                            value={formData.age}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="grade">Grade *</Label>
+                                        <select
+                                            id="grade"
+                                            name="grade"
+                                            value={formData.grade}
+                                            onChange={handleInputChange}
+                                            required
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                        >
+                                            <option value="">Select Grade</option>
+                                            <option value="Below 6">Below 6th Grade</option>
+                                            <option value="6">6th Grade</option>
+                                            <option value="7">7th Grade</option>
+                                            <option value="8">8th Grade</option>
+                                            <option value="9">9th Grade</option>
+                                            <option value="10">10th Grade</option>
+                                            <option value="11">11th Grade</option>
+                                            <option value="12">12th Grade</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="schoolName">School Name *</Label>
+                                        <Input
+                                            id="schoolName"
+                                            name="schoolName"
+                                            value={formData.schoolName}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="flex gap-2">
                                 <Button type="submit" disabled={dataLoading}>
@@ -335,16 +417,7 @@ export default function ParentDashboard() {
                                     onClick={() => {
                                         setShowAddForm(false)
                                         setEditingId(null)
-                                        setFormData({
-                                            firstName: "",
-                                            lastName: "",
-                                            email: "",
-                                            phone: "",
-                                            grade: "",
-                                            schoolName: "",
-                                            schoolAddress: "",
-                                            password: "",
-                                        })
+                                        resetForm()
                                     }}
                                 >
                                     Cancel
@@ -384,7 +457,7 @@ export default function ParentDashboard() {
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-sm text-muted-foreground">{dependent.phone}</p>
+                                        <p className="text-sm text-muted-foreground">{dependent.phone || dependent.email}</p>
                                         {dependent.grade && (
                                             <p className="text-xs text-muted-foreground/80 mt-1">
                                                 Grade {dependent.grade} • {dependent.schoolName}

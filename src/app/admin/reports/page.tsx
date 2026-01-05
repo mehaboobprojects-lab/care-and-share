@@ -1,42 +1,65 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { databases } from "@/lib/appwrite"
+import { databases, APPWRITE_CONFIG } from "@/lib/appwrite"
 import { Query } from "appwrite"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
+interface VolunteerReport {
+    id: string;
+    date: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    hours: number;
+}
+
 export default function ReportsPage() {
-    const [checkins, setCheckins] = useState<any[]>([])
+    const [reportData, setReportData] = useState<VolunteerReport[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [reportType, setReportType] = useState<'weekly' | 'monthly' | 'yearly'>('monthly')
+    const [totals, setTotals] = useState({ hours: 0, volunteers: 0, sessions: 0 })
+
+
+
+    const [allVolunteers, setAllVolunteers] = useState<any[]>([])
+    const [allCheckins, setAllCheckins] = useState<any[]>([])
+    const [isInitialLoading, setIsInitialLoading] = useState(true)
 
     useEffect(() => {
-        async function fetchHistory() {
+        async function loadBaseData() {
             try {
-                // Fetch all approved checkins
-                // NOTE: For large datasets, use pagination or cursor. simple list for now.
-                const res = await databases.listDocuments(
-                    'care_share_db',
-                    'checkins',
+                const volRes = await databases.listDocuments(
+                    APPWRITE_CONFIG.databaseId,
+                    APPWRITE_CONFIG.volunteersCollectionId,
+                    [Query.limit(1000)]
+                );
+                const checkRes = await databases.listDocuments(
+                    APPWRITE_CONFIG.databaseId,
+                    APPWRITE_CONFIG.checkinsCollectionId,
                     [
                         Query.equal('status', 'approved'),
-                        Query.limit(1000)
+                        Query.limit(10000)
                     ]
                 );
-                setCheckins(res.documents);
-            } catch (error) {
-                console.error(error)
+                setAllVolunteers(volRes.documents);
+                setAllCheckins(checkRes.documents);
+            } catch (e) {
+                console.error(e);
             } finally {
-                setIsLoading(false)
+                setIsInitialLoading(false);
             }
         }
-        fetchHistory();
-    }, [])
+        loadBaseData();
+    }, []);
 
-    const getAggregatedData = () => {
+    useEffect(() => {
+        if (isInitialLoading) return;
+
         const now = new Date();
-        const filtered = checkins.filter(c => {
+        const filteredCheckins = allCheckins.filter(c => {
             const date = new Date(c.startTime);
             if (reportType === 'weekly') {
                 const oneWeekAgo = new Date();
@@ -49,13 +72,42 @@ export default function ReportsPage() {
             }
         });
 
-        const totalHours = filtered.reduce((acc, curr) => acc + (curr.calculatedHours || 0), 0);
-        const uniqueVolunteers = new Set(filtered.map(c => c.volunteerId)).size;
+        // Create a map of volunteers for easy lookup
+        const volMap = new Map<string, any>();
+        allVolunteers.forEach(v => volMap.set(v.$id, v));
 
-        return { totalHours, uniqueVolunteers, checkins: filtered };
-    }
+        // Build detailed report rows (one per check-in)
+        const rows: VolunteerReport[] = [];
 
-    const { totalHours, uniqueVolunteers, checkins: reportData } = getAggregatedData();
+        filteredCheckins.forEach(c => {
+            const volunteer = volMap.get(c.volunteerId);
+            if (volunteer) {
+                rows.push({
+                    id: c.$id,
+                    date: c.startTime,
+                    firstName: volunteer.firstName,
+                    lastName: volunteer.lastName,
+                    email: volunteer.email,
+                    phone: volunteer.phone,
+                    hours: c.calculatedHours || 0
+                });
+            }
+        });
+
+        // Sort by Date descending (newest first)
+        rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        setReportData(rows);
+        setTotals({
+            hours: filteredCheckins.reduce((acc, c) => acc + (c.calculatedHours || 0), 0),
+            volunteers: new Set(rows.map(r => r.email)).size,
+            sessions: filteredCheckins.length
+        });
+
+    }, [isInitialLoading, reportType, allVolunteers, allCheckins]);
+
+
+    if (isInitialLoading) return <div className="p-8">Loading data...</div>;
 
     return (
         <div className="flex min-h-screen flex-col bg-gray-50 p-8">
@@ -71,43 +123,47 @@ export default function ReportsPage() {
                 <Card>
                     <CardHeader><CardTitle>Total Hours</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold">{totalHours.toFixed(2)}</div>
+                        <div className="text-3xl font-bold">{totals.hours.toFixed(2)}</div>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader><CardTitle>Volunteers Active</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>Active Volunteers</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold">{uniqueVolunteers}</div>
+                        <div className="text-3xl font-bold">{totals.volunteers}</div>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader><CardTitle>Total Sessions</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold">{reportData.length}</div>
+                        <div className="text-3xl font-bold">{totals.sessions}</div>
                     </CardContent>
                 </Card>
             </div>
 
             <Card>
-                <CardHeader><CardTitle>Detailed Breakdown</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Detailed Log ({reportType})</CardTitle></CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left">
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-4 py-2">Date</th>
-                                    <th className="px-4 py-2">Volunteer ID</th>
-                                    <th className="px-4 py-2">Activity</th>
-                                    <th className="px-4 py-2">Hours</th>
+                                    <th className="px-4 py-2">First Name</th>
+                                    <th className="px-4 py-2">Last Name</th>
+                                    <th className="px-4 py-2">Email</th>
+                                    <th className="px-4 py-2">Phone</th>
+                                    <th className="px-4 py-2 text-right">Hours</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {reportData.map((c) => (
-                                    <tr key={c.$id} className="border-b">
-                                        <td className="px-4 py-2">{new Date(c.startTime).toLocaleDateString()}</td>
-                                        <td className="px-4 py-2">{c.volunteerId}</td>
-                                        <td className="px-4 py-2">{c.type}</td>
-                                        <td className="px-4 py-2">{c.calculatedHours}</td>
+                                {reportData.map((row) => (
+                                    <tr key={row.id} className="border-b hover:bg-gray-50/50">
+                                        <td className="px-4 py-2 text-muted-foreground">{new Date(row.date).toLocaleDateString()}</td>
+                                        <td className="px-4 py-2 font-medium">{row.firstName}</td>
+                                        <td className="px-4 py-2 font-medium">{row.lastName}</td>
+                                        <td className="px-4 py-2 text-muted-foreground">{row.email}</td>
+                                        <td className="px-4 py-2 text-muted-foreground">{row.phone}</td>
+                                        <td className="px-4 py-2 text-right font-bold">{row.hours.toFixed(2)}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -118,3 +174,5 @@ export default function ReportsPage() {
         </div>
     )
 }
+
+

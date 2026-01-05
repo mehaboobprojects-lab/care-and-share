@@ -11,6 +11,7 @@ interface Volunteer extends Models.Document {
     role: string;
     isApproved: boolean;
     email: string;
+    phone?: string;
 }
 
 interface AuthContextType {
@@ -44,8 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             if (response.documents.length > 0) {
                 setVolunteer(response.documents[0] as unknown as Volunteer)
+            } else {
+                console.warn("Auth record found but no volunteer profile for userId:", sessionUser.$id);
+                setVolunteer(null)
             }
-        } catch (err) {
+        } catch (err: any) {
+            if (err.code !== 401) {
+                console.error("Auth fetch error:", err.message);
+            }
             setUser(null)
             setVolunteer(null)
         } finally {
@@ -63,14 +70,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const publicPaths = ["/", "/login", "/register"]
         const isPublicPath = publicPaths.includes(pathname)
-
-        if (!user && !isPublicPath) {
-            router.push("/login")
-        } else if (user && isPublicPath && pathname !== "/") {
-            // If logged in and on login/register, go to appropriate dashboard
-            if (volunteer?.role === 'super_admin') router.push('/super-admin')
-            else if (volunteer?.role === 'admin') router.push('/admin')
-            else if (volunteer?.role === 'parent') router.push('/parent')
+        if (!user) {
+            if (!isPublicPath) {
+                router.push("/login")
+            }
+        } else if (!volunteer) {
+            // Logged in but no profile
+            // Force redirect if on login or a protected route
+            if (!isPublicPath || pathname === "/login") {
+                router.push("/register")
+            }
+        } else if (isPublicPath && pathname !== "/") {
+            // Logged in with profile on login/register
+            if (volunteer.role === 'super_admin') router.push('/super-admin')
+            else if (volunteer.role === 'admin') router.push('/admin')
+            else if (volunteer.role === 'parent') router.push('/parent')
             else router.push('/dashboard')
         }
     }, [user, volunteer, isLoading, pathname, router])

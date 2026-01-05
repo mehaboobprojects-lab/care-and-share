@@ -47,13 +47,24 @@ export default function LoginPage() {
         setError(null)
 
         try {
+            // Proactively clear any existing session to prevent "session prohibited" error
+            try {
+                await account.deleteSession('current')
+            } catch (e) {
+                // Ignore if no session exists
+            }
+
             await account.createEmailPasswordSession(data.email, data.password)
             // Refresh authentication state in context
             await refreshAuth()
             // Redirection is handled by AuthProvider's useEffect
         } catch (err: any) {
             console.error("Login failed:", err)
-            setError(err.message || "Invalid email or password.")
+            if (err.message?.includes("Failed to fetch") || err.name === "TypeError") {
+                setError(`Connection Error: Please ensure you've whitelisted 'localhost' in the Appwrite Console (Settings > Platforms). Raw error: ${err.message}`)
+            } else {
+                setError(err.message || "Invalid email or password.")
+            }
         } finally {
             setIsLoading(false)
         }
