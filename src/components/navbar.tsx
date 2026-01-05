@@ -15,6 +15,7 @@ export function Navbar() {
     const publicPaths = ["/", "/login", "/register"]
     const isPublicPath = publicPaths.includes(pathname)
 
+    if (pathname === "/") return null
     if (isPublicPath && !user) return null
 
     return (
