@@ -31,6 +31,12 @@ export function Navbar() {
                         <>
                             {/* Desktop Menu */}
                             <div className="hidden lg:flex items-center gap-4 mr-2 border-r pr-4 border-border">
+                                <Link
+                                    href="/"
+                                    className={`text-sm font-medium transition-colors hover:text-primary ${pathname === '/' ? 'text-primary' : 'text-muted-foreground'}`}
+                                >
+                                    Home
+                                </Link>
                                 {pathname !== '/dashboard' && (
                                     <Link
                                         href="/dashboard"
@@ -112,13 +118,22 @@ export function Navbar() {
                         </div>
 
                         {pathname !== '/dashboard' && (
-                            <Link
-                                href="/dashboard"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground py-2"
-                            >
-                                My Dashboard
-                            </Link>
+                            <>
+                                <Link
+                                    href="/"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={`text-sm font-medium transition-colors hover:text-primary text-muted-foreground py-2 ${pathname === '/' ? 'text-primary' : 'text-muted-foreground'}`}
+                                >
+                                    Home
+                                </Link>
+                                <Link
+                                    href="/dashboard"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground py-2"
+                                >
+                                    My Dashboard
+                                </Link>
+                            </>
                         )}
 
                         {volunteer?.role === 'super_admin' && (
