@@ -22,7 +22,7 @@ export function Navbar() {
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                 <Link href="/" className="font-bold text-xl text-primary flex items-center gap-2">
                     <span className="text-2xl">🍞</span>
-                    <span className="hidden sm:inline">Care & Share</span>
+                    <span>Care & Share</span>
                 </Link>
 
                 <div className="flex items-center gap-2 sm:gap-4">
