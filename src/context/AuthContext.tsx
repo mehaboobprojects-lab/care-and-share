@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await account.deleteSession("current")
             setUser(null)
             setVolunteer(null)
-            router.push("/")
+            window.location.href = "/"
         } catch (err) {
             console.error("Logout failed:", err)
         } finally {
