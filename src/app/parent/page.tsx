@@ -240,7 +240,7 @@ export default function ParentDashboard() {
     }
 
     return (
-        <div className="flex min-h-screen flex-col bg-background p-4 sm:p-8">
+        <div className="flex min-h-screen flex-col bg-background p-4 sm:p-8 overflow-x-hidden">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <h1 className="text-3xl font-bold">Parent Dashboard</h1>
             </div>
@@ -457,7 +457,7 @@ export default function ParentDashboard() {
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-sm text-muted-foreground">{dependent.phone || dependent.email}</p>
+                                        <p className="text-sm text-muted-foreground break-all">{dependent.phone || dependent.email}</p>
                                         {dependent.grade && (
                                             <p className="text-xs text-muted-foreground/80 mt-1">
                                                 Grade {dependent.grade} • {dependent.schoolName}

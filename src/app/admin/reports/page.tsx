@@ -110,7 +110,7 @@ export default function ReportsPage() {
     if (isInitialLoading) return <div className="p-8">Loading data...</div>;
 
     return (
-        <div className="flex min-h-screen flex-col bg-gray-50 p-8">
+        <div className="flex min-h-screen flex-col bg-gray-50 p-8 overflow-x-hidden">
             <h1 className="text-3xl font-bold mb-6">Reports</h1>
 
             <div className="flex gap-2 mb-6">

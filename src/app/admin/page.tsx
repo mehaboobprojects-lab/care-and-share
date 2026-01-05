@@ -111,7 +111,7 @@ export default function AdminDashboard() {
     if (isLoading) return null
 
     return (
-        <div className="flex min-h-screen flex-col bg-background p-4 sm:p-8">
+        <div className="flex min-h-screen flex-col bg-background p-4 sm:p-8 overflow-x-hidden">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <h1 className="text-3xl font-bold">Admin Dashboard</h1>
             </div>

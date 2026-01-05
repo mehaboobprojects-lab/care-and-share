@@ -156,7 +156,7 @@ export default function SuperAdminDashboard() {
     if (authLoading || dataLoading) return <div className="flex h-screen items-center justify-center">Loading Super Admin Panel...</div>
 
     return (
-        <div className="flex min-h-screen flex-col bg-background p-4 sm:p-8">
+        <div className="flex min-h-screen flex-col bg-background p-4 sm:p-8 overflow-x-hidden">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <h1 className="text-3xl font-bold">Super Admin Dashboard</h1>
             </div>
@@ -234,7 +234,7 @@ export default function SuperAdminDashboard() {
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                                        <p className="text-sm text-muted-foreground break-all">{user.email}</p>
                                         {user.schoolName && (
                                             <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1">
                                                 <span>🏫</span> {user.schoolName}
