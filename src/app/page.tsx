@@ -47,7 +47,7 @@ export default function LandingPage() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="mt-6 text-lg leading-8 text-gray-300"
           >
-            Join over 800 volunteers in supporting needy families in New Jersey. Track your service hours, manage distribution, and make a real difference.
+            Join a growing community of volunteers who prepare 800 fresh sandwiches at every event and deliver them to families in need across New Jersey. Track your service hours, support distribution, and make a real difference.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
