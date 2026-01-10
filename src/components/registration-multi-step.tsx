@@ -300,7 +300,9 @@ export function RegistrationMultiStep() {
                 }
             }
 
-            await sendPendingEmail(data.contactEmail, data.firstName)
+            console.log("Calling sendPendingEmail...");
+            const emailResult = await sendPendingEmail(data.contactEmail, data.firstName)
+            console.log("Email Result:", emailResult);
             await refreshAuth()
         } catch (err: any) {
             console.error("Registration failed:", err)
