@@ -265,7 +265,7 @@ export default function SuperAdminDashboard() {
                                                     Approve
                                                 </Button>
                                             )}
-                                            {user.role === 'volunteer' && (
+                                            {(user.role === 'volunteer' || user.role === 'parent') && user.volunteerCategory !== 'student' && (
                                                 <Button
                                                     onClick={() => promoteToAdmin(user.$id)}
                                                     size="sm"
