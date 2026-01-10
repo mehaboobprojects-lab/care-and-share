@@ -166,16 +166,6 @@ export function CheckInManager({ volunteerId, existingCheckIn, onStatusChange, v
 
         } catch (error: any) {
             console.error(error);
-            onStatusChange();
-            if (activeSessions.documents.length > 0) {
-                alert(`Checked out ${activeSessions.documents.length} volunteer(s)!`);
-            } else {
-                // Fallback if state was out of sync
-                setActiveCheckIn(null);
-            }
-
-        } catch (error: any) {
-            console.error(error);
             setErrorMessage("Failed to check out: " + error.message);
         } finally {
             setIsLoading(false);
