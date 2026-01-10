@@ -138,7 +138,7 @@ export default function ParentDashboard() {
                     userId: "", // No auth account for dependent initially
                     firstName: formData.firstName,
                     lastName: formData.lastName,
-                    email: formData.email || user?.email || "",
+                    email: formData.email || "",
                     phone: formData.phone || volunteer?.phone || "",
                     volunteerCategory: formData.volunteerCategory,
                     contactRelationship: "parent",
