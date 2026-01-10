@@ -506,6 +506,9 @@ export function RegistrationMultiStep() {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Render explicit form errors (like duplicate email) inside Step 2 view */}
+                            {error && <p className="text-sm text-red-500 font-medium p-2 bg-red-50 rounded border border-red-100">{error}</p>}
                         </div>
                     )}
 
