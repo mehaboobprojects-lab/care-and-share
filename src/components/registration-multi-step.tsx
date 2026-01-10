@@ -12,6 +12,7 @@ import { account, databases, APPWRITE_CONFIG } from "@/lib/appwrite"
 import { ID, Query } from "appwrite" // Added Query
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/context/AuthContext" // Added useAuth
+import { sendPendingEmail } from "@/lib/email-actions"
 
 const registrationSchema = z.object({
     volunteerCategory: z.enum(["student", "adult", "parent"]),
@@ -218,6 +219,9 @@ export function RegistrationMultiStep() {
                     isApproved: false,
                 }
             )
+
+            // Send pending request email
+            await sendPendingEmail(data.contactEmail, data.firstName)
 
             // Refresh authentication state in context
             await refreshAuth()

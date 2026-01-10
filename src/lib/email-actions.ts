@@ -76,3 +76,51 @@ export async function sendApprovalEmail(email: string, firstName: string) {
     return { success: false, error: error.message || "Failed to send email via Gmail" };
   }
 }
+
+export async function sendPendingEmail(email: string, firstName: string) {
+  const transporter = getTransporter();
+
+  if (!transporter) {
+    const user = process.env.GMAIL_USER?.trim();
+    const pass = process.env.GMAIL_PASS?.replace(/\s+/g, '');
+    let errorMsg = "Email configuration missing: ";
+    if (!user) errorMsg += "GMAIL_USER is NOT set. ";
+    if (!pass) errorMsg += "GMAIL_PASS is NOT set. ";
+
+    console.warn(errorMsg);
+    return { success: false, error: errorMsg };
+  }
+
+  console.log(`Attempting to send Gmail pending email from ${process.env.GMAIL_USER} to: ${email}`);
+
+  try {
+    const mailOptions = {
+      from: `"Care and Share" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: 'Registration Received - Care and Share',
+      html: `
+        <div style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+          <h1 style="color: #0d9488; text-align: center;">Registration Received</h1>
+          <p>Hi ${firstName},</p>
+          <p>Thank you for registering with <strong>Care and Share</strong>. We have received your request to join our team of volunteers.</p>
+          <p>Your account is currently <strong>pending approval</strong>. Our administrators review all new registrations to ensure the safety and security of our community.</p>
+          <p>You will receive another email once your account has been approved and activated.</p>
+          <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 15px; margin: 20px 0;">
+            <p style="margin: 0; color: #115e59; font-size: 14px;"><strong>Note:</strong> You won't be able to log in to the dashboard until your account is approved.</p>
+          </div>
+          <p>Thank you for your patience and your willingness to serve!</p>
+          <p>Best regards,<br>The Care and Share Team</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="font-size: 12px; color: #666; text-align: center;">Serving the Community, One Sandwich at a Time.</p>
+        </div>
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Gmail (pending) sent successfully:", info.messageId);
+    return { success: true, data: { id: info.messageId } };
+  } catch (error: any) {
+    console.error("Nodemailer Error:", error);
+    return { success: false, error: error.message || "Failed to send email via Gmail" };
+  }
+}
