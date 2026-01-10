@@ -222,4 +222,48 @@ export function CheckInManager({ volunteerId, existingCheckIn, onStatusChange, v
     }
 
 
+
+    return (
+        <div className="grid grid-cols-1 gap-4 w-full">
+            {errorMessage && (
+                <div className="bg-destructive/10 border border-destructive/20 text-destructive p-3 rounded-md text-sm mb-2">
+                    {errorMessage}
+                </div>
+            )}
+
+            {volunteerIds && volunteerIds.length > 0 && (
+                <div className="mb-4 bg-muted/50 p-4 rounded-lg border border-border">
+                    <p className="text-sm font-medium mb-3">Select who is attending:</p>
+                    <div className="space-y-2">
+                        {volunteerIds.map(id => (
+                            <label key={id} className="flex items-center gap-3 p-2 hover:bg-muted rounded-md cursor-pointer transition">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedVolunteers.includes(id)}
+                                    onChange={(e) => {
+                                        if (e.target.checked) setSelectedVolunteers(prev => [...prev, id]);
+                                        else setSelectedVolunteers(prev => prev.filter(sid => sid !== id));
+                                    }}
+                                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                                <span className="text-sm font-medium">
+                                    {volunteerNames?.[id] || (id === volunteerId ? "Self (Parent)" : "Volunteer")}
+                                </span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <Button
+                size="lg"
+                onClick={() => handleCheckIn('sandwich_making')}
+                disabled={isLoading}
+                className="w-full h-20 text-xl"
+            >
+                {volunteerIds ? "Start Sandwich Making for Group" : "Start Sandwich Making"}
+            </Button>
+            {/* Other buttons updated to match if needed */}
+        </div>
+    )
 }
