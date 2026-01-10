@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { account } from "@/lib/appwrite"
+import { account, databases, APPWRITE_CONFIG } from "@/lib/appwrite"
+import { Query } from "appwrite"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -55,6 +56,20 @@ export default function LoginPage() {
             }
 
             await account.createEmailPasswordSession(data.email, data.password)
+
+            // Check if volunteer profile exists
+            const currentUser = await account.get();
+            const volunteerRes = await databases.listDocuments(
+                APPWRITE_CONFIG.databaseId,
+                APPWRITE_CONFIG.volunteersCollectionId,
+                [Query.equal('userId', currentUser.$id)]
+            );
+
+            if (volunteerRes.documents.length === 0) {
+                await account.deleteSession('current');
+                throw new Error("Access denied. No volunteer account found for this email.");
+            }
+
             // Refresh authentication state in context
             await refreshAuth()
             // Redirection is handled by AuthProvider's useEffect
