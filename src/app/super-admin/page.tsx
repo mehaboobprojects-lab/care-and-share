@@ -17,6 +17,7 @@ interface User {
     volunteerCategory?: string
     grade?: string
     schoolName?: string
+    contactEmail?: string
 }
 
 import { useAuth } from "@/context/AuthContext"
@@ -29,6 +30,7 @@ export default function SuperAdminDashboard() {
     const [filteredUsers, setFilteredUsers] = useState<User[]>([])
     const [filter, setFilter] = useState<'all' | 'admin' | 'volunteer' | 'pending'>('all')
     const [dataLoading, setDataLoading] = useState(true)
+    const [lastEmailStatus, setLastEmailStatus] = useState<string | null>(null);
 
     const fetchUsers = async () => {
         setDataLoading(true)
@@ -117,21 +119,26 @@ export default function SuperAdminDashboard() {
             )
             setUsers(prev => prev.map(u => u.$id === userId ? { ...u, isApproved: true } : u))
 
-            // Send approval email
-            if (userToApprove?.email) {
-                console.log(`Triggering approval email to ${userToApprove.email}`);
-                const res = await sendApprovalEmail(userToApprove.email, userToApprove.firstName);
+            const targetEmail = userToApprove?.email || userToApprove?.contactEmail;
+
+            if (targetEmail) {
+                console.log(`Triggering approval email to ${targetEmail}`);
+                const res = await sendApprovalEmail(targetEmail, userToApprove.firstName);
                 console.log(`Email action response:`, res);
                 if (res.success) {
-                    alert(`User approved and welcome email sent to ${userToApprove.email}`);
+                    console.log(`User approved and welcome email sent to ${targetEmail}`);
+                    setLastEmailStatus(`✅ Email sent to ${targetEmail}`);
                 } else {
                     const errorMsg = typeof res.error === 'string' ? res.error : (res.error as any)?.message || 'Unknown error';
-                    alert(`User approved, but email failed: ${errorMsg}`);
+                    console.error(`User approved, but email failed: ${errorMsg}`);
+                    setLastEmailStatus(`❌ Email FAILED to ${targetEmail}: ${errorMsg}`);
                 }
             } else {
                 console.warn(`No email found for user ${userId}, skipping notification.`);
-                alert("User approved (no email found to notify)");
+                setLastEmailStatus(`⚠️ No email address for user ${userId}`);
             }
+            // Clear status after 5 seconds
+            setTimeout(() => setLastEmailStatus(null), 10000);
         } catch (error) {
             console.error(error)
         }
@@ -160,6 +167,11 @@ export default function SuperAdminDashboard() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <h1 className="text-3xl font-bold">Super Admin Dashboard</h1>
             </div>
+            {lastEmailStatus && (
+                <div className={`mb-6 p-4 rounded-md border ${lastEmailStatus.includes('FAILED') ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
+                    <strong>Email Status:</strong> {lastEmailStatus}
+                </div>
+            )}
 
             {/* Filter Tabs */}
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2">

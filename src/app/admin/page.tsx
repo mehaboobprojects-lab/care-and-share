@@ -77,19 +77,20 @@ export default function AdminDashboard() {
             setPendingVolunteers(prev => prev.filter(v => v.$id !== id));
 
             // Send approval email
-            if (volunteerToApprove?.email) {
-                console.log(`Triggering approval email to ${volunteerToApprove.email}`);
-                const res = await sendApprovalEmail(volunteerToApprove.email, volunteerToApprove.firstName);
+            const targetEmail = volunteerToApprove?.email || volunteerToApprove?.contactEmail;
+
+            if (targetEmail) {
+                console.log(`Triggering approval email to ${targetEmail}`);
+                const res = await sendApprovalEmail(targetEmail, volunteerToApprove.firstName);
                 console.log(`Email action response:`, res);
                 if (res.success) {
-                    alert(`Volunteer approved and welcome email sent to ${volunteerToApprove.email}`);
+                    console.log(`Volunteer approved and welcome email sent to ${targetEmail}`);
                 } else {
                     const errorMsg = typeof res.error === 'string' ? res.error : (res.error as any)?.message || 'Unknown error';
-                    alert(`Volunteer approved, but email failed: ${errorMsg}`);
+                    console.error(`Volunteer approved, but email failed: ${errorMsg}`);
                 }
             } else {
                 console.warn(`No email found for volunteer ${id}, skipping notification.`);
-                alert("Volunteer approved (no email found to notify)");
             }
         } catch (error) {
             console.error(error);

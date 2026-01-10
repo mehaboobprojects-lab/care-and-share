@@ -31,6 +31,7 @@ export default function ParentDashboard() {
     const [showAddForm, setShowAddForm] = useState(false)
     const [editingId, setEditingId] = useState<string | null>(null)
     const [activeCheckIn, setActiveCheckIn] = useState<any>(null)
+    const [activeDependentIds, setActiveDependentIds] = useState<Set<string>>(new Set())
 
     // Form state
     const [formData, setFormData] = useState({
@@ -84,6 +85,23 @@ export default function ParentDashboard() {
             )
             if (activeRes.total > 0) setActiveCheckIn(activeRes.documents[0])
             else setActiveCheckIn(null)
+
+            // 3. Fetch dependents' active check-ins
+            const depIds = Array.from(uniqueMap.keys());
+            if (depIds.length > 0) {
+                const depCheckinsRes = await databases.listDocuments(
+                    APPWRITE_CONFIG.databaseId,
+                    APPWRITE_CONFIG.checkinsCollectionId,
+                    [
+                        Query.equal('volunteerId', depIds),
+                        Query.equal('status', 'active')
+                    ]
+                );
+                const activeIds = new Set(depCheckinsRes.documents.map((doc: any) => doc.volunteerId));
+                setActiveDependentIds(activeIds as Set<string>);
+            } else {
+                setActiveDependentIds(new Set());
+            }
         } catch (error: any) {
             console.error("Error fetching data:", error)
         } finally {
@@ -120,8 +138,8 @@ export default function ParentDashboard() {
                     userId: "", // No auth account for dependent initially
                     firstName: formData.firstName,
                     lastName: formData.lastName,
-                    email: formData.email,
-                    phone: formData.phone,
+                    email: formData.email || user?.email || "",
+                    phone: formData.phone || volunteer?.phone || "",
                     volunteerCategory: formData.volunteerCategory,
                     contactRelationship: "parent",
                     contactName: volunteer?.firstName + " " + volunteer?.lastName,
@@ -456,6 +474,11 @@ export default function ParentDashboard() {
                                                     APPROVED
                                                 </span>
                                             )}
+                                            {activeDependentIds.has(dependent.$id) && (
+                                                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-semibold animate-pulse">
+                                                    ● LIVE NOW
+                                                </span>
+                                            )}
                                         </div>
                                         <p className="text-sm text-muted-foreground break-all">{dependent.phone || dependent.email}</p>
                                         {dependent.grade && (
@@ -487,6 +510,6 @@ export default function ParentDashboard() {
                     )}
                 </CardContent>
             </Card>
-        </div>
+        </div >
     )
 }

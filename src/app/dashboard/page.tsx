@@ -60,6 +60,7 @@ export default function DashboardPage() {
         await logout()
     }
 
+
     if (isLoading) return <div className="flex h-screen items-center justify-center">Loading...</div>
 
     if (!volunteer) return (
@@ -79,6 +80,8 @@ export default function DashboardPage() {
         </div>
     )
 
+    const isApproved = volunteer.isApproved === true || (volunteer.isApproved as any) === 'true';
+
     return (
         <div className="flex min-h-screen flex-col bg-background">
             <header className="bg-card border-b border-border shadow-sm">
@@ -87,7 +90,7 @@ export default function DashboardPage() {
                 </div>
             </header>
             <main className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
-                {!volunteer.isApproved ? (
+                {!isApproved ? (
                     <Card className="bg-yellow-500/5 border-yellow-500/20">
                         <CardHeader>
                             <CardTitle className="text-yellow-600 dark:text-yellow-400">Account Pending Approval</CardTitle>

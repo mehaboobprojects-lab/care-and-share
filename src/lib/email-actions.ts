@@ -50,7 +50,7 @@ export async function sendApprovalEmail(email: string, firstName: string) {
     const mailOptions = {
       from: `"Care and Share" <${process.env.GMAIL_USER}>`,
       to: email,
-      subject: 'Your Care and Share Account has been Approved! 🎉',
+      subject: 'Care and Share - Account Approved',
       html: `
         <div style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
           <h1 style="color: #0d9488; text-align: center;">Welcome to the Team, ${firstName}!</h1>

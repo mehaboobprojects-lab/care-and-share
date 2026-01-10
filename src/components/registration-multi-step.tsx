@@ -156,7 +156,6 @@ export function RegistrationMultiStep() {
 
         if (isValid) {
             // Flow Control
-            console.log("NextStep Flow Check:", { currentStep, volunteerCategory, isRegisteringDependents, notRegDeps: !isRegisteringDependents });
             if (currentStep === 2 && volunteerCategory === 'parent' && !isRegisteringDependents) {
                 // Adult Volunteer -> Skip Step 3 (Dependents) -> Go to Step 4
                 setCurrentStep(4)
@@ -300,9 +299,7 @@ export function RegistrationMultiStep() {
                 }
             }
 
-            console.log("Calling sendPendingEmail...");
-            const emailResult = await sendPendingEmail(data.contactEmail, data.firstName)
-            console.log("Email Result:", emailResult);
+            await sendPendingEmail(data.contactEmail, data.firstName)
             await refreshAuth()
         } catch (err: any) {
             console.error("Registration failed:", err)
@@ -622,9 +619,6 @@ export function RegistrationMultiStep() {
                         )}
                     </div>
                 </form>
-                <div className="mt-4 p-2 bg-gray-100 text-xs text-gray-500 rounded font-mono">
-                    DEBUG: Cat={volunteerCategory}, RegDeps={String(isRegisteringDependents)}, Step={currentStep}
-                </div>
             </CardContent>
         </Card>
     )
