@@ -58,7 +58,7 @@ export async function sendApprovalEmail(email: string, firstName: string) {
           <p>We're thrilled to inform you that your registration with <strong>Care and Share</strong> has been approved by our administrators.</p>
           <p>You can now log in to your dashboard to start tracking your volunteer hours and participate in our upcoming programs.</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://care-and-share-one.vercel.app/login" style="background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Log In to Dashboard</a>
+            <a href="https://care-and-share.vercel.app/login" style="background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Log In to Dashboard</a>
           </div>
           <p>If you have any questions or need assistance, feel free to reply to this email.</p>
           <p>Best regards,<br>The Care and Share Team</p>
