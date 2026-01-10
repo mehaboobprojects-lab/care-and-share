@@ -153,8 +153,34 @@ export function RegistrationMultiStep() {
         }
 
         const isValid = await trigger(fieldsToValidate)
+        setError(null)
 
         if (isValid) {
+            // Check email uniqueness if on Step 2
+            if (currentStep === 2) {
+                const emailToCheck = watch("contactEmail");
+                if (emailToCheck) {
+                    try {
+                        setIsLoading(true);
+                        const existingVolunteers = await databases.listDocuments(
+                            APPWRITE_CONFIG.databaseId,
+                            APPWRITE_CONFIG.volunteersCollectionId,
+                            [Query.equal('email', emailToCheck)]
+                        );
+                        setIsLoading(false);
+
+                        if (existingVolunteers.documents.length > 0) {
+                            setError("This email is already registered. Please login instead.");
+                            return;
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        setIsLoading(false);
+                        // Optional: block or allow if network error? Safety first -> allow but log
+                    }
+                }
+            }
+
             // Flow Control
             if (currentStep === 2 && volunteerCategory === 'parent' && !isRegisteringDependents) {
                 // Adult Volunteer -> Skip Step 3 (Dependents) -> Go to Step 4
