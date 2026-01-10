@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { CheckInManager } from "@/components/check-in-manager"
+import { HistoryList } from "@/components/history-list"
 
 interface Volunteer extends Models.Document {
     firstName: string;
@@ -98,32 +99,35 @@ export default function DashboardPage() {
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        <Card className="col-span-2">
-                            <CardHeader>
-                                <CardTitle>Check In / Out</CardTitle>
-                                <CardDescription>Record your volunteer hours</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <CheckInManager
-                                    volunteerId={volunteer.$id}
-                                    existingCheckIn={activeCheckIn}
-                                    onStatusChange={fetchActiveCheckIn}
-                                />
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Quick Stats</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">0.0</div>
-                                <p className="text-xs text-muted-foreground">Hours this month</p>
-                            </CardContent>
-                        </Card>
+                    <div className="space-y-6">
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            <Card className="col-span-2">
+                                <CardHeader>
+                                    <CardTitle>Check In / Out</CardTitle>
+                                    <CardDescription>Record your volunteer hours</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <CheckInManager
+                                        volunteerId={volunteer.$id}
+                                        existingCheckIn={activeCheckIn}
+                                        onStatusChange={fetchActiveCheckIn}
+                                    />
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Quick Stats</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">0.0</div>
+                                    <p className="text-xs text-muted-foreground">Hours this month</p>
+                                </CardContent>
+                            </Card>
+                        </div>
+                        <HistoryList volunteerId={volunteer.$id} />
                     </div>
                 )}
             </main>
-        </div>
+        </div >
     )
 }

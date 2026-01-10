@@ -258,7 +258,7 @@ export function RegistrationMultiStep() {
                     parentPhone: data.parentPhone || "",
                     termsAccepted: data.termsAccepted,
                     parentConsent: data.parentConsent || false,
-                    role: data.volunteerCategory === 'parent' ? 'parent' : 'volunteer',
+                    role: (data.volunteerCategory === 'parent' && data.isRegisteringDependents) ? 'parent' : 'volunteer',
                     isApproved: false,
                 }
             )
