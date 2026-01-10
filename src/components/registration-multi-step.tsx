@@ -31,7 +31,7 @@ const registrationSchema = z.object({
     firstName: z.string().min(2, "First name is required"),
     lastName: z.string().min(2, "Last name is required"),
     contactEmail: z.string().email("Invalid email address"),
-    contactPhone: z.string().min(10, "Valid phone number is required"),
+    contactPhone: z.string().optional(),
     password: z.string().min(8, "Password must be at least 8 characters"),
     address: z.string().optional(),
 
@@ -170,7 +170,7 @@ export function RegistrationMultiStep() {
                         setIsLoading(false);
 
                         if (existingVolunteers.documents.length > 0) {
-                            setError("This email is already registered. Please login instead.");
+                            setError("User with this Login ID exists. Please enter different Email ID.");
                             return;
                         }
                     } catch (err) {
