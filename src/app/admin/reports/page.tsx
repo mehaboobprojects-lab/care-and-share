@@ -61,6 +61,8 @@ export default function ReportsPage() {
         const now = new Date();
         const filteredCheckins = allCheckins.filter(c => {
             const date = new Date(c.startTime);
+            // Verify if volunteer exists in map (it should, as we fetched all volunteers)
+            // Students are just volunteers with category='student'
             if (reportType === 'weekly') {
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(now.getDate() - 7);
