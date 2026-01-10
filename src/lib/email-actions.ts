@@ -34,8 +34,14 @@ export async function sendApprovalEmail(email: string, firstName: string) {
   const transporter = getTransporter();
 
   if (!transporter) {
-    console.warn("GMAIL_USER or GMAIL_PASS is not set in environment variables. Email will not be sent.");
-    return { success: false, error: "Email configuration missing (GMAIL_USER/PASS)" };
+    const user = process.env.GMAIL_USER?.trim();
+    const pass = process.env.GMAIL_PASS?.replace(/\s+/g, '');
+    let errorMsg = "Email configuration missing: ";
+    if (!user) errorMsg += "GMAIL_USER is NOT set. ";
+    if (!pass) errorMsg += "GMAIL_PASS is NOT set. ";
+
+    console.warn(errorMsg);
+    return { success: false, error: errorMsg };
   }
 
   console.log(`Attempting to send Gmail approval email from ${process.env.GMAIL_USER} to: ${email}`);

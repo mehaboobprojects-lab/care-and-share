@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "Care & Share",
+    "slug": "mobile",
+    "scheme": "careandshare",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ],
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses your location to automatically check you in to volunteer centers when you arrive.",
+        "NSLocationAlwaysUsageDescription": "This app uses your location to automatically check you in to volunteer centers when you arrive.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to check you in."
+      },
+      "bundleIdentifier": "com.careandshare.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.careandshare.mobile",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Care & Share to use your location to check needed centers."
+        }
+      ]
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
