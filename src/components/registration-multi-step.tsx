@@ -37,7 +37,7 @@ const registrationSchema = z.object({
 
     // Role Toggle for Parent/Adult
     // If true -> Parent (has dependents), If false -> Adult Volunteer
-    isRegisteringDependents: z.boolean().default(false),
+    isRegisteringDependents: z.boolean(),
 
     // Step 3: Dependents (if isRegisteringDependents === true)
     dependents: z.array(dependentSchema).optional(),
