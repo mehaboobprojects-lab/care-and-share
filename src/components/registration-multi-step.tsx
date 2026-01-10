@@ -179,6 +179,17 @@ export function RegistrationMultiStep() {
         setError(null)
 
         try {
+            // Check if email already exists in Volunteers collection
+            const existingVolunteers = await databases.listDocuments(
+                APPWRITE_CONFIG.databaseId,
+                APPWRITE_CONFIG.volunteersCollectionId,
+                [Query.equal('email', data.contactEmail)]
+            );
+
+            if (existingVolunteers.documents.length > 0) {
+                throw new Error("An account with this email already exists. Please login instead.");
+            }
+
             // 1. Handle Account & Session
             let currentUserId = "";
 
