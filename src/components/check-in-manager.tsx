@@ -97,150 +97,139 @@ export function CheckInManager({ volunteerId, existingCheckIn, onStatusChange, v
         }
     }
 
-    {
-        isLoading ? "Processing..." : (
-            volunteerIds && volunteerIds.length > 0
-                ? "CHECK OUT GROUP"
-                : "CHECK OUT"
-        )
-    }
-                </Button >
-        <p className="text-sm text-muted-foreground">Don't forget to check out to log your hours!</p>
-            </div >
-        )
-}
 
-// 2. If parent is NOT checked in, but we have some dependents selected who MIGHT be checked in?
-// Actually, the parent view shows "CHECK OUT" only if *activeCheckIn* (msg 130) is present, which is the parent's session.
-// We need to allow checking out OTHERS even if parent isn't checked in, OR change the UX.
-// BUT the requirement is "kids checkout time and updated".
-// The current CheckInManager primarily tracks 'activeCheckIn' which is passed from parent page as *the parent's* checkin.
-// If the parent checks in *just the kids*, activeCheckIn is null.
-// So the parent sees the "Start Sandwich Making" button again?
-// Yes. And if they click it again for kids who are already active, it says "already checked in".
-// So there is NO button to check out the kids if the parent isn't checked in.
 
-// FIX: We need to see if ANY of the selected volunteers have an active check-in.
-// However, the component structure relies on `existingCheckIn` prop from the parent page, which currently usually usually only tracks the logged-in user?
-// Let's look at how CheckInManager is used in parent/page.tsx... getting that file next.
+    // 2. If parent is NOT checked in, but we have some dependents selected who MIGHT be checked in?
+    // Actually, the parent view shows "CHECK OUT" only if *activeCheckIn* (msg 130) is present, which is the parent's session.
+    // We need to allow checking out OTHERS even if parent isn't checked in, OR change the UX.
+    // BUT the requirement is "kids checkout time and updated".
+    // The current CheckInManager primarily tracks 'activeCheckIn' which is passed from parent page as *the parent's* checkin.
+    // If the parent checks in *just the kids*, activeCheckIn is null.
+    // So the parent sees the "Start Sandwich Making" button again?
+    // Yes. And if they click it again for kids who are already active, it says "already checked in".
+    // So there is NO button to check out the kids if the parent isn't checked in.
 
-// For now, I will update the handleCheckOut to actually loop through `selectedVolunteers` (or all) if possible?
-// `activeCheckIn` is a single document.
-// If we want group checkout, we need to find active checkins for all targets.
+    // FIX: We need to see if ANY of the selected volunteers have an active check-in.
+    // However, the component structure relies on `existingCheckIn` prop from the parent page, which currently usually usually only tracks the logged-in user?
+    // Let's look at how CheckInManager is used in parent/page.tsx... getting that file next.
 
-async function handleCheckOut() {
-    setIsLoading(true);
-    try {
-        // If we are in "group mode", we should try to check out everyone in the list who is active?
-        // Or just the people currently selected?
-        // "volunteerIds" are the dependents + parent.
-        // Let's fetch active checkins for ALL associated IDs.
+    // For now, I will update the handleCheckOut to actually loop through `selectedVolunteers` (or all) if possible?
+    // `activeCheckIn` is a single document.
+    // If we want group checkout, we need to find active checkins for all targets.
 
-        const targets = volunteerIds?.length ? volunteerIds : [volunteerId];
+    async function handleCheckOut() {
+        setIsLoading(true);
+        try {
+            // If we are in "group mode", we should try to check out everyone in the list who is active?
+            // Or just the people currently selected?
+            // "volunteerIds" are the dependents + parent.
+            // Let's fetch active checkins for ALL associated IDs.
 
-        const activeSessions = await databases.listDocuments(
-            APPWRITE_CONFIG.databaseId,
-            APPWRITE_CONFIG.checkinsCollectionId,
-            [
-                Query.equal('volunteerId', targets),
-                Query.equal('status', 'active')
-            ]
-        );
+            const targets = volunteerIds?.length ? volunteerIds : [volunteerId];
 
-        const endTime = new Date();
-
-        for (const session of activeSessions.documents) {
-            const startTime = new Date(session.startTime);
-            const durationMs = endTime.getTime() - startTime.getTime();
-            const hours = durationMs / (1000 * 60 * 60);
-
-            await databases.updateDocument(
+            const activeSessions = await databases.listDocuments(
                 APPWRITE_CONFIG.databaseId,
                 APPWRITE_CONFIG.checkinsCollectionId,
-                session.$id,
-                {
-                    endTime: endTime.toISOString(),
-                    status: 'pending_review',
-                    calculatedHours: parseFloat(hours.toFixed(2))
-                }
+                [
+                    Query.equal('volunteerId', targets),
+                    Query.equal('status', 'active')
+                ]
             );
-        }
 
-        setActiveCheckIn(null);
-        onStatusChange();
-        if (activeSessions.documents.length > 0) {
-            alert(`Checked out ${activeSessions.documents.length} volunteer(s)!`);
-        } else {
-            // Fallback if state was out of sync
-            setActiveCheckIn(null);
-        }
+            const endTime = new Date();
 
-    } catch (error: any) {
-        console.error(error);
-        onStatusChange();
-        if (activeSessions.documents.length > 0) {
-            alert(`Checked out ${activeSessions.documents.length} volunteer(s)!`);
-        } else {
-            // Fallback if state was out of sync
-            setActiveCheckIn(null);
-        }
+            for (const session of activeSessions.documents) {
+                const startTime = new Date(session.startTime);
+                const durationMs = endTime.getTime() - startTime.getTime();
+                const hours = durationMs / (1000 * 60 * 60);
 
-    } catch (error: any) {
-        console.error(error);
-        setErrorMessage("Failed to check out: " + error.message);
-    } finally {
-        setIsLoading(false);
-    }
-}
-
-// Check for any active sessions in the group
-const [hasGroupActiveSession, setHasGroupActiveSession] = useState(false);
-
-useEffect(() => {
-    async function checkGroupStatus() {
-        if (volunteerIds && volunteerIds.length > 0) {
-            try {
-                const existingCheckInsRes = await databases.listDocuments(
+                await databases.updateDocument(
                     APPWRITE_CONFIG.databaseId,
                     APPWRITE_CONFIG.checkinsCollectionId,
-                    [
-                        Query.equal('volunteerId', volunteerIds),
-                        Query.equal('status', 'active')
-                    ]
+                    session.$id,
+                    {
+                        endTime: endTime.toISOString(),
+                        status: 'pending_review',
+                        calculatedHours: parseFloat(hours.toFixed(2))
+                    }
                 );
-                setHasGroupActiveSession(existingCheckInsRes.documents.length > 0);
-            } catch (e) {
-                console.error("Failed to check group status", e);
             }
-        } else if (activeCheckIn) {
-            setHasGroupActiveSession(true);
-        } else {
-            setHasGroupActiveSession(false);
+
+            setActiveCheckIn(null);
+            onStatusChange();
+            if (activeSessions.documents.length > 0) {
+                alert(`Checked out ${activeSessions.documents.length} volunteer(s)!`);
+            } else {
+                // Fallback if state was out of sync
+                setActiveCheckIn(null);
+            }
+
+        } catch (error: any) {
+            console.error(error);
+            onStatusChange();
+            if (activeSessions.documents.length > 0) {
+                alert(`Checked out ${activeSessions.documents.length} volunteer(s)!`);
+            } else {
+                // Fallback if state was out of sync
+                setActiveCheckIn(null);
+            }
+
+        } catch (error: any) {
+            console.error(error);
+            setErrorMessage("Failed to check out: " + error.message);
+        } finally {
+            setIsLoading(false);
         }
     }
-    checkGroupStatus();
-}, [volunteerIds, activeCheckIn, onStatusChange]); // Re-check when status changes
 
-if (activeCheckIn || hasGroupActiveSession) {
-    return (
-        <div className="flex flex-col gap-4 items-center">
-            <div className="text-xl font-semibold border-b border-border pb-2 mb-2 animate-pulse text-primary dark:text-primary-foreground">
-                {/* If multiple people, just say "Active Session" */}
-                {hasGroupActiveSession ? "Active Group Session" : `Currently Checked In (${new Date(activeCheckIn.startTime).toLocaleTimeString()})`}
+    // Check for any active sessions in the group
+    const [hasGroupActiveSession, setHasGroupActiveSession] = useState(false);
+
+    useEffect(() => {
+        async function checkGroupStatus() {
+            if (volunteerIds && volunteerIds.length > 0) {
+                try {
+                    const existingCheckInsRes = await databases.listDocuments(
+                        APPWRITE_CONFIG.databaseId,
+                        APPWRITE_CONFIG.checkinsCollectionId,
+                        [
+                            Query.equal('volunteerId', volunteerIds),
+                            Query.equal('status', 'active')
+                        ]
+                    );
+                    setHasGroupActiveSession(existingCheckInsRes.documents.length > 0);
+                } catch (e) {
+                    console.error("Failed to check group status", e);
+                }
+            } else if (activeCheckIn) {
+                setHasGroupActiveSession(true);
+            } else {
+                setHasGroupActiveSession(false);
+            }
+        }
+        checkGroupStatus();
+    }, [volunteerIds, activeCheckIn, onStatusChange]); // Re-check when status changes
+
+    if (activeCheckIn || hasGroupActiveSession) {
+        return (
+            <div className="flex flex-col gap-4 items-center">
+                <div className="text-xl font-semibold border-b border-border pb-2 mb-2 animate-pulse text-primary dark:text-primary-foreground">
+                    {/* If multiple people, just say "Active Session" */}
+                    {hasGroupActiveSession ? "Active Group Session" : `Currently Checked In (${new Date(activeCheckIn.startTime).toLocaleTimeString()})`}
+                </div>
+                <Button
+                    size="lg"
+                    variant="destructive"
+                    onClick={handleCheckOut}
+                    disabled={isLoading}
+                    className="w-full h-24 text-2xl"
+                >
+                    {isLoading ? "Processing..." : "CHECK OUT GROUP"}
+                </Button>
+                <p className="text-sm text-muted-foreground">Don't forget to check out to log your hours!</p>
             </div>
-            <Button
-                size="lg"
-                variant="destructive"
-                onClick={handleCheckOut}
-                disabled={isLoading}
-                className="w-full h-24 text-2xl"
-            >
-                {isLoading ? "Processing..." : "CHECK OUT GROUP"}
-            </Button>
-            <p className="text-sm text-muted-foreground">Don't forget to check out to log your hours!</p>
-        </div>
-    )
-}
+        )
+    }
 
 
 }
