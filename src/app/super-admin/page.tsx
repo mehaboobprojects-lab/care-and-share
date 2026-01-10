@@ -71,7 +71,7 @@ export default function SuperAdminDashboard() {
         } else if (filter === "admin") {
             setFilteredUsers(users.filter(u => u.role === "admin"))
         } else if (filter === "volunteer") {
-            setFilteredUsers(users.filter(u => u.role === "volunteer"))
+            setFilteredUsers(users.filter(u => u.role === "volunteer" || u.role === "parent"))
         } else if (filter === "pending") {
             setFilteredUsers(users.filter(u => !u.isApproved))
         }
@@ -194,7 +194,7 @@ export default function SuperAdminDashboard() {
                     onClick={() => setFilter("volunteer")}
                     size="sm"
                 >
-                    Volunteers ({users.filter(u => u.role === "volunteer").length})
+                    Volunteers ({users.filter(u => u.role === "volunteer" || u.role === "parent").length})
                 </Button>
                 <Button
                     variant={filter === "pending" ? "default" : "outline"}
