@@ -85,12 +85,13 @@ export default function ReportsPage() {
 
                 // If they have a contact relationship (meaning created by a parent), they are a Dependent/Child
                 if (volunteer.contactRelationship === 'parent') {
-                    // Check age to distinguish Child vs Student if needed, or just call them Dependent
                     role = 'child';
                 } else if (volunteer.volunteerCategory === 'student') {
                     role = 'student';
                 } else if (volunteer.volunteerCategory === 'parent') {
-                    role = 'parent/adult';
+                    role = 'parent';
+                } else if (volunteer.volunteerCategory === 'adult') {
+                    role = 'adult';
                 }
 
                 rows.push({
@@ -176,9 +177,9 @@ export default function ReportsPage() {
                                         <td className="px-4 py-2 text-muted-foreground">{row.phone}</td>
                                         <td className="px-4 py-2 uppercase text-xs font-semibold tracking-wide">
                                             <span className={`px-2 py-1 rounded-full ${row.category === 'parent/adult' ? 'bg-blue-100 text-blue-700' :
-                                                    row.category === 'student' ? 'bg-green-100 text-green-700' :
-                                                        row.category === 'child' ? 'bg-purple-100 text-purple-700' :
-                                                            'bg-gray-100 text-gray-700'
+                                                row.category === 'student' ? 'bg-green-100 text-green-700' :
+                                                    row.category === 'child' ? 'bg-purple-100 text-purple-700' :
+                                                        'bg-gray-100 text-gray-700'
                                                 }`}>
                                                 {row.category}
                                             </span>
