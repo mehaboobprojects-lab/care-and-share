@@ -44,8 +44,8 @@ export default function DashboardPage() {
                     APPWRITE_CONFIG.checkinsCollectionId,
                     [
                         Query.equal('volunteerId', volunteer.$id),
-                        Query.equal('status', 'approved'),
-                        Query.limit(5000) // Fetch all approved check-ins
+                        Query.equal('status', ['approved', 'pending_review']),
+                        Query.limit(5000) // Fetch all verified and pending check-ins
                     ]
                 );
 
