@@ -266,6 +266,12 @@ export function RegistrationMultiStep() {
 
             if (!currentUserId) throw new Error("Failed to establish user identity.");
 
+            let finalCategory = data.volunteerCategory;
+            // Refine category: 'parent' means they selected Parent/Adult, but 'adult' implies no dependents
+            if (finalCategory === 'parent' && !data.isRegisteringDependents) {
+                finalCategory = 'adult';
+            }
+
             // 2. Create PARENT/MAIN Volunteer Document
             await databases.createDocument(
                 APPWRITE_CONFIG.databaseId,
@@ -277,7 +283,7 @@ export function RegistrationMultiStep() {
                     lastName: data.lastName,
                     email: data.contactEmail,
                     phone: data.contactPhone,
-                    volunteerCategory: data.volunteerCategory === 'parent' ? 'parent' : 'student',
+                    volunteerCategory: finalCategory, // Use refined category
                     contactRelationship: 'self',
                     contactName: `${data.firstName} ${data.lastName}`,
                     contactEmail: data.contactEmail,
