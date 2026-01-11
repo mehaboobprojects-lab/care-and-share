@@ -24,6 +24,7 @@ export default function DashboardPage() {
     const { user, volunteer, isLoading, logout } = useAuth()
     const [activeCheckIn, setActiveCheckIn] = useState<any>(null)
     const [isDataLoading, setIsDataLoading] = useState(false)
+    const [refreshKey, setRefreshKey] = useState(0)
 
     const fetchActiveCheckIn = async () => {
         if (!volunteer) return
@@ -43,6 +44,8 @@ export default function DashboardPage() {
             } else {
                 setActiveCheckIn(null)
             }
+            // Refresh history list whenever we check status (implies potential change)
+            setRefreshKey(prev => prev + 1)
         } catch (error) {
             console.error("Error fetching active check-in:", error)
         } finally {
@@ -127,7 +130,7 @@ export default function DashboardPage() {
                                 </CardContent>
                             </Card>
                         </div>
-                        <HistoryList volunteerId={volunteer.$id} />
+                        <HistoryList volunteerId={volunteer.$id} refreshTrigger={refreshKey} />
                     </div>
                 )}
             </main>
