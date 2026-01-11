@@ -186,8 +186,8 @@ export default function ParentDashboard() {
                 {
                     firstName: formData.firstName,
                     lastName: formData.lastName,
-                    phone: formData.phone,
-                    email: formData.email,
+                    phone: formData.phone || "",
+                    email: formData.email || "",
                     volunteerCategory: formData.volunteerCategory,
                     age: formData.volunteerCategory === 'student' ? parseInt(formData.age) : null,
                     grade: formData.volunteerCategory === 'student' ? formData.grade : "",
