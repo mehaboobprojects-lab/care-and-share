@@ -32,6 +32,7 @@ export default function ParentDashboard() {
     const [editingId, setEditingId] = useState<string | null>(null)
     const [activeCheckIn, setActiveCheckIn] = useState<any>(null)
     const [activeDependentIds, setActiveDependentIds] = useState<Set<string>>(new Set())
+    const [weeklyStats, setWeeklyStats] = useState<Record<string, number>>({})
 
     // Form state
     const [formData, setFormData] = useState({
@@ -102,6 +103,40 @@ export default function ParentDashboard() {
             } else {
                 setActiveDependentIds(new Set());
             }
+
+            // 4. Fetch Weekly Stats for Parent + Dependents
+            const now = new Date();
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+
+            const allIds = [volunteer.$id, ...Array.from(uniqueMap.keys())];
+
+            if (allIds.length > 0) {
+                const statsRes = await databases.listDocuments(
+                    APPWRITE_CONFIG.databaseId,
+                    APPWRITE_CONFIG.checkinsCollectionId,
+                    [
+                        Query.equal('volunteerId', allIds),
+                        Query.equal('status', 'approved'),
+                        Query.limit(5000) // Assumption: Not fetching years of data, but should filter by date eventually if list grows
+                    ]
+                );
+
+                const currentWeekStats: Record<string, number> = {};
+                // Initialize with 0
+                allIds.forEach(id => currentWeekStats[id] = 0);
+
+                statsRes.documents.forEach((doc: any) => {
+                    const d = new Date(doc.startTime);
+                    if (d >= startOfWeek) {
+                        const vid = doc.volunteerId;
+                        currentWeekStats[vid] = (currentWeekStats[vid] || 0) + (doc.calculatedHours || 0);
+                    }
+                });
+                setWeeklyStats(currentWeekStats);
+            }
+
         } catch (error: any) {
             console.error("Error fetching data:", error)
         } finally {
@@ -267,6 +302,33 @@ export default function ParentDashboard() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <h1 className="text-3xl font-bold">Parent Dashboard</h1>
             </div>
+            {/* Quick Stats Section */}
+            {volunteer && (
+                <Card className="mb-8">
+                    <CardHeader>
+                        <CardTitle>Quick Stats (This Week)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-wrap gap-6">
+                            {/* Parent Stats */}
+                            <div className="flex flex-col">
+                                <span className="text-sm text-muted-foreground">Parent</span>
+                                <span className="font-medium text-lg">{volunteer.firstName}</span>
+                                <span className="text-2xl font-bold text-primary">{(weeklyStats[volunteer.$id] || 0).toFixed(2)} hrs</span>
+                            </div>
+
+                            {/* Children Stats */}
+                            {dependents.map(dep => (
+                                <div key={dep.$id} className="flex flex-col">
+                                    <span className="text-sm text-muted-foreground">Child</span>
+                                    <span className="font-medium text-lg">{dep.firstName}</span>
+                                    <span className="text-2xl font-bold text-blue-600">{(weeklyStats[dep.$id] || 0).toFixed(2)} hrs</span>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Collective Check-in Section */}
             {volunteer && (volunteer.isApproved || dependents.some(d => d.isApproved)) && (
