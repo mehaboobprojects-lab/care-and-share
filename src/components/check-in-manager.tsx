@@ -205,7 +205,7 @@ export function CheckInManager({ volunteerId, existingCheckIn, onStatusChange, v
             <div className="flex flex-col gap-4 items-center">
                 <div className="text-xl font-semibold border-b border-border pb-2 mb-2 animate-pulse text-primary dark:text-primary-foreground">
                     {/* If multiple people, just say "Active Session" */}
-                    {hasGroupActiveSession ? "Active Group Session" : `Currently Checked In (${new Date(activeCheckIn.startTime).toLocaleTimeString()})`}
+                    {hasGroupActiveSession && volunteerIds?.length > 1 ? "Active Group Session" : `Currently Checked In`}
                 </div>
                 <Button
                     size="lg"
@@ -214,7 +214,7 @@ export function CheckInManager({ volunteerId, existingCheckIn, onStatusChange, v
                     disabled={isLoading}
                     className="w-full h-24 text-2xl"
                 >
-                    {isLoading ? "Processing..." : "CHECK OUT GROUP"}
+                    {isLoading ? "Processing..." : (hasGroupActiveSession && volunteerIds?.length > 1 ? "CHECK OUT GROUP" : "CHECK OUT")}
                 </Button>
                 <p className="text-sm text-muted-foreground">Don't forget to check out to log your hours!</p>
             </div>
