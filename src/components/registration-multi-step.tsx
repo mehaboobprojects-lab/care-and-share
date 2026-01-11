@@ -189,6 +189,7 @@ export function RegistrationMultiStep() {
         setCurrentStep(prev => Math.min(prev + 1, totalSteps))
     }
 }
+}
 
 
 const prevStep = () => {
