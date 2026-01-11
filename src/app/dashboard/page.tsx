@@ -83,10 +83,46 @@ export default function DashboardPage() {
         </div>
     )
 
+    const [monthlyHours, setMonthlyHours] = useState(0)
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            if (!volunteer) return;
+            try {
+                const now = new Date();
+                const response = await databases.listDocuments(
+                    APPWRITE_CONFIG.databaseId,
+                    APPWRITE_CONFIG.checkinsCollectionId,
+                    [
+                        Query.equal('volunteerId', volunteer.$id),
+                        Query.equal('status', 'approved'), // Only count approved hours? Or pending too? Usually approved.
+                        Query.limit(100) // Assuming < 100 sessions/month
+                    ]
+                );
+
+                // Filter for current month client-side (or use sophisticated queries if possible)
+                const thisMonthCheckins = response.documents.filter((doc: any) => {
+                    const d = new Date(doc.startTime);
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                });
+
+                const total = thisMonthCheckins.reduce((acc: number, curr: any) => acc + (curr.calculatedHours || 0), 0);
+                setMonthlyHours(total);
+            } catch (e) {
+                console.error("Failed to fetch stats", e);
+            }
+        };
+
+        if (volunteer) fetchStats();
+    }, [volunteer, refreshKey]); // Refresh stats when checkin happens
+
+    // ... (rest of component handles logout etc)
+
     const isApproved = volunteer.isApproved === true || (volunteer.isApproved as any) === 'true';
 
     return (
         <div className="flex min-h-screen flex-col bg-background">
+            {/* ... header ... */}
             <header className="bg-card border-b border-border shadow-sm">
                 <div className="mx-auto flex flex-col sm:flex-row max-w-7xl items-center justify-between px-4 py-6 sm:px-6 lg:px-8 gap-4 sm:gap-0">
                     <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
@@ -94,6 +130,7 @@ export default function DashboardPage() {
             </header>
             <main className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
                 {!isApproved ? (
+                    // ... pending view ...
                     <Card className="bg-yellow-500/5 border-yellow-500/20">
                         <CardHeader>
                             <CardTitle className="text-yellow-600 dark:text-yellow-400">Account Pending Approval</CardTitle>
@@ -125,7 +162,7 @@ export default function DashboardPage() {
                                     <CardTitle>Quick Stats</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold">0.0</div>
+                                    <div className="text-2xl font-bold">{monthlyHours.toFixed(2)}</div>
                                     <p className="text-xs text-muted-foreground">Hours this month</p>
                                 </CardContent>
                             </Card>
