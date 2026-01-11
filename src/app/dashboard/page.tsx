@@ -25,6 +25,37 @@ export default function DashboardPage() {
     const [activeCheckIn, setActiveCheckIn] = useState<any>(null)
     const [isDataLoading, setIsDataLoading] = useState(false)
     const [refreshKey, setRefreshKey] = useState(0)
+    const [monthlyHours, setMonthlyHours] = useState(0)
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            if (!volunteer) return;
+            try {
+                const now = new Date();
+                const response = await databases.listDocuments(
+                    APPWRITE_CONFIG.databaseId,
+                    APPWRITE_CONFIG.checkinsCollectionId,
+                    [
+                        Query.equal('volunteerId', volunteer.$id),
+                        Query.equal('status', 'approved'),
+                        Query.limit(100)
+                    ]
+                );
+
+                const thisMonthCheckins = response.documents.filter((doc: any) => {
+                    const d = new Date(doc.startTime);
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                });
+
+                const total = thisMonthCheckins.reduce((acc: number, curr: any) => acc + (curr.calculatedHours || 0), 0);
+                setMonthlyHours(total);
+            } catch (e) {
+                console.error("Failed to fetch stats", e);
+            }
+        };
+
+        if (volunteer) fetchStats();
+    }, [volunteer, refreshKey]);
 
     const fetchActiveCheckIn = async () => {
         if (!volunteer) return
