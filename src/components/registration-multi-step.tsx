@@ -26,7 +26,7 @@ const dependentSchema = z.object({
 })
 
 const registrationSchema = z.object({
-    volunteerCategory: z.enum(["student", "parent"]), // 'parent' now covers 'adult' too in UI
+    volunteerCategory: z.enum(["student", "parent", "adult"]), // 'parent' covers 'adult' too in UI, but 'adult' is used for backend separation
 
     // Step 2: Parent/Adult Personal Info + Security
     firstName: z.string().min(2, "First name is required"),
