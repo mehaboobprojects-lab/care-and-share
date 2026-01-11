@@ -13,7 +13,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 
-export function HistoryList({ volunteerId }: { volunteerId: string }) {
+export function HistoryList({ volunteerId, refreshTrigger }: { volunteerId: string, refreshTrigger?: number }) {
     const [checkins, setCheckins] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
@@ -40,7 +40,7 @@ export function HistoryList({ volunteerId }: { volunteerId: string }) {
         if (volunteerId) {
             fetchHistory()
         }
-    }, [volunteerId])
+    }, [volunteerId, refreshTrigger])
 
     if (isLoading) {
         return <div className="text-sm text-gray-500">Loading history...</div>
@@ -79,8 +79,8 @@ export function HistoryList({ volunteerId }: { volunteerId: string }) {
                                         </TableCell>
                                         <TableCell>
                                             <span className={`text-xs px-2 py-1 rounded-full font-medium ${checkin.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                                    checkin.status === 'active' ? 'bg-blue-100 text-blue-800' :
-                                                        'bg-yellow-100 text-yellow-800'
+                                                checkin.status === 'active' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-yellow-100 text-yellow-800'
                                                 }`}>
                                                 {checkin.status === 'active' ? 'Active' :
                                                     checkin.status === 'approved' ? 'Approved' : 'Pending'}
