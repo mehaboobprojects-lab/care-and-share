@@ -53,15 +53,7 @@ export default function ReportsPage() {
         loadBaseData();
     }, []);
 
-                    <td className="px-4 py-2 uppercase text-xs font-semibold tracking-wide">
-                        <span className={`px-2 py-1 rounded-full ${row.category === 'parent' ? 'bg-blue-100 text-blue-700' :
-                                row.category === 'student' ? 'bg-green-100 text-green-700' :
-                                    'bg-gray-100 text-gray-700'
-                            }`}>
-                            {row.category}
-                        </span>
-                    </td>
-                    <td className="px-4 py-2 text-right font-bold">{row.hours.toFixed(2)}</td>
+
     const [isLoading, setIsLoading] = useState(true)
     const [reportType, setReportType] = useState<'weekly' | 'monthly' | 'yearly'>('monthly')
     const [totals, setTotals] = useState({ hours: 0, volunteers: 0, sessions: 0 })
