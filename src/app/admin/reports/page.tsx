@@ -52,11 +52,7 @@ export default function ReportsPage() {
         }
         loadBaseData();
     }, []);
-                    <td className="px-4 py-2 text-muted-foreground">{new Date(row.date).toLocaleDateString()}</td>
-                    <td className="px-4 py-2 font-medium">{row.firstName}</td>
-                    <td className="px-4 py-2 font-medium">{row.lastName}</td>
-                    <td className="px-4 py-2 text-muted-foreground">{row.email}</td>
-                    <td className="px-4 py-2 text-muted-foreground">{row.phone}</td>
+
                     <td className="px-4 py-2 uppercase text-xs font-semibold tracking-wide">
                         <span className={`px-2 py-1 rounded-full ${row.category === 'parent' ? 'bg-blue-100 text-blue-700' :
                                 row.category === 'student' ? 'bg-green-100 text-green-700' :
