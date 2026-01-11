@@ -87,7 +87,7 @@ export function CheckInManager({ volunteerId, existingCheckIn, onStatusChange, v
 
             onStatusChange();
             if (volunteerIds?.length) {
-                alert("Check-in successful!");
+                console.log("Check-in successful!");
             }
         } catch (error: any) {
             console.error(error);
