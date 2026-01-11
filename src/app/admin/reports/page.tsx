@@ -54,51 +54,12 @@ export default function ReportsPage() {
     }, []);
 
 
-    const [isLoading, setIsLoading] = useState(true)
-    const [reportType, setReportType] = useState<'weekly' | 'monthly' | 'yearly'>('monthly')
-    const [totals, setTotals] = useState({ hours: 0, volunteers: 0, sessions: 0 })
-
-
-
-    const [allVolunteers, setAllVolunteers] = useState<any[]>([])
-    const [allCheckins, setAllCheckins] = useState<any[]>([])
-    const [isInitialLoading, setIsInitialLoading] = useState(true)
-
-    useEffect(() => {
-        async function loadBaseData() {
-            try {
-                const volRes = await databases.listDocuments(
-                    APPWRITE_CONFIG.databaseId,
-                    APPWRITE_CONFIG.volunteersCollectionId,
-                    [Query.limit(1000)]
-                );
-                const checkRes = await databases.listDocuments(
-                    APPWRITE_CONFIG.databaseId,
-                    APPWRITE_CONFIG.checkinsCollectionId,
-                    [
-                        Query.equal('status', 'approved'),
-                        Query.limit(10000)
-                    ]
-                );
-                setAllVolunteers(volRes.documents);
-                setAllCheckins(checkRes.documents);
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setIsInitialLoading(false);
-            }
-        }
-        loadBaseData();
-    }, []);
-
     useEffect(() => {
         if (isInitialLoading) return;
 
         const now = new Date();
         const filteredCheckins = allCheckins.filter(c => {
             const date = new Date(c.startTime);
-            // Verify if volunteer exists in map (it should, as we fetched all volunteers)
-            // Students are just volunteers with category='student'
             if (reportType === 'weekly') {
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(now.getDate() - 7);
@@ -110,11 +71,9 @@ export default function ReportsPage() {
             }
         });
 
-        // Create a map of volunteers for easy lookup
         const volMap = new Map<string, any>();
         allVolunteers.forEach(v => volMap.set(v.$id, v));
 
-        // Build detailed report rows (one per check-in)
         const rows: VolunteerReport[] = [];
 
         filteredCheckins.forEach(c => {
@@ -127,12 +86,12 @@ export default function ReportsPage() {
                     lastName: volunteer.lastName,
                     email: volunteer.email,
                     phone: volunteer.phone,
+                    category: volunteer.volunteerCategory || 'N/A',
                     hours: c.calculatedHours || 0
                 });
             }
         });
 
-        // Sort by Date descending (newest first)
         rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         setReportData(rows);
@@ -143,7 +102,6 @@ export default function ReportsPage() {
         });
 
     }, [isInitialLoading, reportType, allVolunteers, allCheckins]);
-
 
     if (isInitialLoading) return <div className="p-8">Loading data...</div>;
 
@@ -190,6 +148,7 @@ export default function ReportsPage() {
                                     <th className="px-4 py-2">Last Name</th>
                                     <th className="px-4 py-2">Email</th>
                                     <th className="px-4 py-2">Phone</th>
+                                    <th className="px-4 py-2">Category</th>
                                     <th className="px-4 py-2 text-right">Hours</th>
                                 </tr>
                             </thead>
@@ -201,6 +160,14 @@ export default function ReportsPage() {
                                         <td className="px-4 py-2 font-medium">{row.lastName}</td>
                                         <td className="px-4 py-2 text-muted-foreground">{row.email}</td>
                                         <td className="px-4 py-2 text-muted-foreground">{row.phone}</td>
+                                        <td className="px-4 py-2 uppercase text-xs font-semibold tracking-wide">
+                                            <span className={`px-2 py-1 rounded-full ${row.category === 'parent' ? 'bg-blue-100 text-blue-700' :
+                                                    row.category === 'student' ? 'bg-green-100 text-green-700' :
+                                                        'bg-gray-100 text-gray-700'
+                                                }`}>
+                                                {row.category}
+                                            </span>
+                                        </td>
                                         <td className="px-4 py-2 text-right font-bold">{row.hours.toFixed(2)}</td>
                                     </tr>
                                 ))}
