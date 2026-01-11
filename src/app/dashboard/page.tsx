@@ -26,6 +26,7 @@ export default function DashboardPage() {
     const [isDataLoading, setIsDataLoading] = useState(false)
     const [refreshKey, setRefreshKey] = useState(0)
     const [monthlyHours, setMonthlyHours] = useState(0)
+    const [totalHours, setTotalHours] = useState(0)
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -38,7 +39,7 @@ export default function DashboardPage() {
                     [
                         Query.equal('volunteerId', volunteer.$id),
                         Query.equal('status', 'approved'),
-                        Query.limit(100)
+                        Query.limit(5000) // Fetch all approved check-ins
                     ]
                 );
 
@@ -47,8 +48,12 @@ export default function DashboardPage() {
                     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
                 });
 
-                const total = thisMonthCheckins.reduce((acc: number, curr: any) => acc + (curr.calculatedHours || 0), 0);
-                setMonthlyHours(total);
+                const monthlyTotal = thisMonthCheckins.reduce((acc: number, curr: any) => acc + (curr.calculatedHours || 0), 0);
+                setMonthlyHours(monthlyTotal);
+
+                // Calculate total hours from ALL time
+                const total = response.documents.reduce((acc: number, curr: any) => acc + (curr.calculatedHours || 0), 0);
+                setTotalHours(total);
             } catch (e) {
                 console.error("Failed to fetch stats", e);
             }
@@ -158,8 +163,8 @@ export default function DashboardPage() {
                                     <CardTitle>Quick Stats</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-2xl font-bold">{monthlyHours.toFixed(2)}</div>
-                                    <p className="text-xs text-muted-foreground">Hours this month</p>
+                                    <div className="text-2xl font-bold">{totalHours.toFixed(2)}</div>
+                                    <p className="text-xs text-muted-foreground">Total Verified Hours</p>
                                 </CardContent>
                             </Card>
                         </div>
