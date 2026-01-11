@@ -118,7 +118,7 @@ export default function ParentDashboard() {
                     APPWRITE_CONFIG.checkinsCollectionId,
                     [
                         Query.equal('volunteerId', allIds),
-                        Query.equal('status', 'approved'),
+                        Query.equal('status', ['approved', 'pending_review']),
                         Query.limit(5000) // Assumption: Not fetching years of data, but should filter by date eventually if list grows
                     ]
                 );
