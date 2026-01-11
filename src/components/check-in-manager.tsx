@@ -158,7 +158,7 @@ export function CheckInManager({ volunteerId, existingCheckIn, onStatusChange, v
             setActiveCheckIn(null);
             onStatusChange();
             if (activeSessions.documents.length > 0) {
-                alert(`Checked out ${activeSessions.documents.length} volunteer(s)!`);
+                console.log(`Checked out ${activeSessions.documents.length} volunteer(s)!`);
             } else {
                 // Fallback if state was out of sync
                 setActiveCheckIn(null);
