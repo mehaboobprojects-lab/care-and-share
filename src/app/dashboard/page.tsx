@@ -27,12 +27,18 @@ export default function DashboardPage() {
     const [refreshKey, setRefreshKey] = useState(0)
     const [monthlyHours, setMonthlyHours] = useState(0)
     const [totalHours, setTotalHours] = useState(0)
+    const [weeklyHours, setWeeklyHours] = useState(0)
 
     useEffect(() => {
         const fetchStats = async () => {
             if (!volunteer) return;
             try {
                 const now = new Date();
+                // Get start of week (Sunday)
+                const startOfWeek = new Date(now);
+                startOfWeek.setDate(now.getDate() - now.getDay());
+                startOfWeek.setHours(0, 0, 0, 0);
+
                 const response = await databases.listDocuments(
                     APPWRITE_CONFIG.databaseId,
                     APPWRITE_CONFIG.checkinsCollectionId,
@@ -43,15 +49,21 @@ export default function DashboardPage() {
                     ]
                 );
 
+                // Weekly
+                const thisWeekCheckins = response.documents.filter((doc: any) => {
+                    const d = new Date(doc.startTime);
+                    return d >= startOfWeek;
+                });
+                setWeeklyHours(thisWeekCheckins.reduce((acc: number, curr: any) => acc + (curr.calculatedHours || 0), 0));
+
+                // Monthly (keeping it in state just in case, though UI might not use it)
                 const thisMonthCheckins = response.documents.filter((doc: any) => {
                     const d = new Date(doc.startTime);
                     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
                 });
+                setMonthlyHours(thisMonthCheckins.reduce((acc: number, curr: any) => acc + (curr.calculatedHours || 0), 0));
 
-                const monthlyTotal = thisMonthCheckins.reduce((acc: number, curr: any) => acc + (curr.calculatedHours || 0), 0);
-                setMonthlyHours(monthlyTotal);
-
-                // Calculate total hours from ALL time
+                // Total
                 const total = response.documents.reduce((acc: number, curr: any) => acc + (curr.calculatedHours || 0), 0);
                 setTotalHours(total);
             } catch (e) {
@@ -162,9 +174,15 @@ export default function DashboardPage() {
                                 <CardHeader>
                                     <CardTitle>Quick Stats</CardTitle>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">{totalHours.toFixed(2)}</div>
-                                    <p className="text-xs text-muted-foreground">Total Verified Hours</p>
+                                <CardContent className="space-y-4">
+                                    <div>
+                                        <div className="text-3xl font-bold text-primary">{weeklyHours.toFixed(2)}</div>
+                                        <p className="text-sm text-muted-foreground">Hours This Week</p>
+                                    </div>
+                                    <div className="pt-2 border-t">
+                                        <div className="text-lg font-semibold">{totalHours.toFixed(2)}</div>
+                                        <p className="text-xs text-muted-foreground">Total Verified Hours</p>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </div>
