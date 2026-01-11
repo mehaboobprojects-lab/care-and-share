@@ -129,13 +129,18 @@ export default function ParentDashboard() {
         setDataLoading(true)
 
         try {
+            // Generate a unique ID for the document, which we will also use as the 'userId' 
+            // for dependents so they have a unique identifier in reports/tables, 
+            // even if they don't have an Appwrite Auth account.
+            const newDependentId = ID.unique();
+
             // Create dependent's volunteer document
             await databases.createDocument(
                 APPWRITE_CONFIG.databaseId,
                 APPWRITE_CONFIG.volunteersCollectionId,
-                ID.unique(),
+                newDependentId,
                 {
-                    userId: "", // No auth account for dependent initially
+                    userId: newDependentId, // Use document ID as pseudo-userId
                     firstName: formData.firstName,
                     lastName: formData.lastName,
                     email: formData.email || "",
