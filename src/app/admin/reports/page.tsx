@@ -80,6 +80,19 @@ export default function ReportsPage() {
         filteredCheckins.forEach(c => {
             const volunteer = volMap.get(c.volunteerId);
             if (volunteer) {
+                // Determine more specific role
+                let role = volunteer.volunteerCategory || 'N/A';
+
+                // If they have a contact relationship (meaning created by a parent), they are a Dependent/Child
+                if (volunteer.contactRelationship === 'parent') {
+                    // Check age to distinguish Child vs Student if needed, or just call them Dependent
+                    role = 'child';
+                } else if (volunteer.volunteerCategory === 'student') {
+                    role = 'student';
+                } else if (volunteer.volunteerCategory === 'parent') {
+                    role = 'parent/adult';
+                }
+
                 rows.push({
                     id: c.$id,
                     date: c.startTime,
@@ -87,7 +100,7 @@ export default function ReportsPage() {
                     lastName: volunteer.lastName,
                     email: volunteer.email,
                     phone: volunteer.phone,
-                    category: volunteer.volunteerCategory || 'N/A',
+                    category: role,
                     hours: c.calculatedHours || 0
                 });
             }
