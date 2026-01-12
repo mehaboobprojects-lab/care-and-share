@@ -103,7 +103,7 @@ export default function ReportsPage() {
                     email: volunteer.email,
                     phone: volunteer.phone,
                     category: role,
-                    parentName: volunteer.contactName || null,
+                    parentName: role === 'child' ? (volunteer.contactName || null) : null,
                     hours: c.calculatedHours || 0
                 });
             }
